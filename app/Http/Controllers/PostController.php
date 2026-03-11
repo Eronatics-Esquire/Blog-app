@@ -16,7 +16,7 @@ class PostController extends Controller
     public function index()
     {    
         // display yung post created at makakakita lang is yung user na gumawa
-        $posts = Post::with(['user', 'comments.user'])
+        $posts = Post::with(['user', 'comments.user', 'reactions'])
         ->where('user_id', Auth::id())
         ->latest()
         ->paginate(10);
@@ -39,7 +39,7 @@ class PostController extends Controller
     public function show(Post $post)
     {
         // di-display yung user post at comment
-        $posts = Post::with(['user', 'comments.user'])
+        $posts = Post::with(['user', 'comments.user', 'reactions'])
         
         ->latest()
         ->paginate();

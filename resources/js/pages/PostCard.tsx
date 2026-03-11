@@ -10,7 +10,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
-import Reaction from '@/components/ui/Reactions/Reaction';
+
 
 type Comment = { comment: string; user: { name: string } };
 
@@ -76,7 +76,7 @@ export default function PostCard({ post }: { post: Post }) {
 
             <CardContent>
                 <p className="text-gray-600">{post.post}</p>
-                
+
                 {/* <div className="mt-3">
                     <Reaction />
                 </div> */}
