@@ -16,6 +16,7 @@ class CommentController extends Controller
      */
     public function index()
     {
+        // didisplay yung comments sa post ng user
         $comments = Comment::with(['user', 'post.user'])
         ->latest()->get();
         return Inertia::render('dashboard',[
@@ -25,6 +26,7 @@ class CommentController extends Controller
 
      public function store(CommentRequest $request, $postId)
     {
+        // checheck nya yung user if sya ba yung naka login. ito din yung pag gawa ng comment
         if (!Auth()->check()){
             return redirect()->back();
         }

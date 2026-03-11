@@ -26,7 +26,7 @@ type Post = {
     id: number;
     title: string;
     post: string;
-    user: { id: number; name: string }
+    user: { id: number; name: string };
     comments?: Comment[];
 };
 export type Props = { posts: { data: Post[] } };
@@ -55,7 +55,6 @@ export default function Dashboard({ posts }: Props) {
             <Head title="Posts" />
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                {/* Create Post Dialog */}
                 <Dialog>
                     <DialogTrigger asChild>
                         <Button variant="outline">Create Post</Button>
