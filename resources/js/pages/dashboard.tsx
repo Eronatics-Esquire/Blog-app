@@ -26,7 +26,7 @@ type Post = {
     id: number;
     title: string;
     post: string;
-    user: { name: string };
+    user: { id: number; name: string }
     comments?: Comment[];
 };
 export type Props = { posts: { data: Post[] } };

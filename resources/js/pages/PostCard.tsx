@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 
 type Comment = { comment: string; user: { name: string } };
 
@@ -16,15 +17,17 @@ type Post = {
     id: number;
     title: string;
     post: string;
-    user: { name: string };
+    user: { id: number; name: string };
     comments?: Comment[];
 };
 
 export default function PostCard({ post }: { post: Post }) {
     const { auth } = usePage().props as any;
+
     const {
         data,
         setData,
+        delete: destroy,
         post: submitComment,
         processing,
         reset,
@@ -38,19 +41,41 @@ export default function PostCard({ post }: { post: Post }) {
         });
     };
 
+    // ✅ Handle post deletion
+    const DeletePost = () => {
+        if (confirm('Are you sure you want to delete this post?')) {
+            destroy(`/posts/${post.id}`, {
+                onSuccess: () => {
+                    console.log('Post deleted successfully');
+                },
+            });
+        }
+    };
+
     return (
-        <Card className="w-full">
-            <CardHeader>
-                <CardTitle>{post.title}</CardTitle>
-                <CardDescription>
-                    Posted by {post.user?.name || 'Unknown'}
-                </CardDescription>
+        <Card className="relative w-full">
+            <CardHeader className="items-start">
+                <div>
+                    <CardTitle>{post.title}</CardTitle>
+                    <CardDescription>
+                        Posted by {post.user?.name || 'Unknown'}
+                    </CardDescription>
+                </div>
+                {auth?.user?.id === post.user?.id && (
+                    <Button
+                    variant='outline'
+                        size="sm"
+                        className="absolute top-6 right-6 z-10 p-2"
+                        onClick={DeletePost}
+                    >
+                        <Trash2 className="h-6 w-6" />
+                    </Button>
+                )}
             </CardHeader>
 
             <CardContent>
                 <p className="text-gray-600">{post.post}</p>
 
-                {/* Comments */}
                 <div className="mt-4 max-h-40 overflow-y-auto border-t pt-4">
                     {post.comments && post.comments.length > 0 ? (
                         post.comments.map((c, idx) => (
@@ -69,7 +94,6 @@ export default function PostCard({ post }: { post: Post }) {
                     )}
                 </div>
 
-                {/* Comment Form */}
                 {auth?.user ? (
                     <form
                         onSubmit={handleCommentSubmit}
