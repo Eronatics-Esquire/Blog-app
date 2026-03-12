@@ -20,6 +20,8 @@ export type Post = {
     title: string;
     post: string;
     user_reaction: string;
+    reaction_counts: Record<string, number> 
+    total_counts: number
     user: { id: number; name: string };
     comments?: Comment[];
 };
@@ -82,11 +84,11 @@ export default function PostCard({ post }: { post: Post }) {
                     <Reaction
                         postId={post.id}
                         initialReaction={post.user_reaction}
+                        reactionCounts={post.reaction_counts}
+                        totalReactions={post.total_counts}
+      
                     />
                 </TooltipProvider>
-                {/* <div className="mt-3">
-                    <Reaction />
-                </div> */}
 
                 <div className="mt-4 max-h-40 overflow-y-auto border-t pt-4">
                     {post.comments && post.comments.length > 0 ? (
@@ -105,34 +107,25 @@ export default function PostCard({ post }: { post: Post }) {
                         <p className="text-gray-400">No comments yet.</p>
                     )}
                 </div>
-                {/* check nya if yung user ay naka login, pag hindi ay hindi sya makaka-comment */}
-                {auth?.user ? (
-                    <form
-                        onSubmit={handleCommentSubmit}
-                        className="mt-4 flex flex-col gap-2"
+                <form
+                    onSubmit={handleCommentSubmit}
+                    className="mt-4 flex flex-col gap-2"
+                >
+                    <Textarea
+                        disabled={!auth.user}
+                        className="resize-none"
+                        placeholder="Write a comment..."
+                        value={data.comment}
+                        onChange={(e) => setData('comment', e.target.value)}
+                    />
+                    <Button
+                        type="submit"
+                        className="w-32 self-end"
+                        disabled={processing || !auth.user}
                     >
-                        <Textarea
-                            className="resize-none"
-                            placeholder="Write a comment..."
-                            value={data.comment}
-                            onChange={(e) => setData('comment', e.target.value)}
-                        />
-
-                        <Button
-                            type="submit"
-                            className="w-32 self-end"
-                            disabled={processing}
-                        >
-                            Comment
-                        </Button>
-                    </form>
-                ) : (
-                    <div className="max-h-40 overflow-y-auto rounded-2xl border-2 pt-4">
-                        <p className="ml-2 py-3 text-gray-400">
-                            You must log in to comment.
-                        </p>
-                    </div>
-                )}
+                        Comment
+                    </Button>
+                </form>
             </CardContent>
         </Card>
     );

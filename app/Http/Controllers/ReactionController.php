@@ -6,15 +6,17 @@ use App\Models\Post;
 use App\Models\Reaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class ReactionController extends Controller
 {
     public function react(Request $request, Post $post)
     {
-        // $reaction = Reaction::where('user_id', Auth::id())
-        //     ->where('post_id', $postId)
-        //     ->first()->get();
+        if (!Auth()->check()){
+            return redirect()->back();
+        }
 
+        
 
         // checheck nya if ang user ay nakapag react na
         $reaction = $post->reactions()
@@ -25,6 +27,7 @@ class ReactionController extends Controller
         $reaction?->delete();
         return redirect()->back();
     }
+        
 
 
         // dito ay pwede update ng user ang reaction na gusto nya

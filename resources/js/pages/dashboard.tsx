@@ -26,7 +26,9 @@ type Post = {
     id: number;
     title: string;
     post: string;
-    user_reaction: string
+    user_reaction: string;
+    reaction_counts: Record<string, number> 
+    total_counts: number
     user: { id: number; name: string };
     comments?: Comment[];
 };
@@ -122,7 +124,7 @@ export default function Dashboard({ posts }: Props) {
                             No posts yet.
                         </p>
                     ) : (
-                        posts.data.map((p) => <PostCard key={p.id} post={p} />)
+                        posts.data.map((p) => <PostCard key={p.id} post={p}  />)
                     )}
                 </div>
             </div>
