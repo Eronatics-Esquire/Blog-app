@@ -19,7 +19,14 @@ class PostController extends Controller
         $posts = Post::with(['user', 'comments.user', 'reactions'])
         ->where('user_id', Auth::id())
         ->latest()
-        ->paginate(10);
+        ->paginate();
+
+        $posts->getCollection()->transform(function ($post) {
+        $post->user_reaction = $post->reactions
+            ->where('user_id', Auth::id())
+            ->first()?->reaction ?? null;
+        return $post;
+    });
 
         return Inertia::render('dashboard',[
             'posts' => $posts,
@@ -38,11 +45,20 @@ class PostController extends Controller
 
     public function show(Post $post)
     {
+
+    
         // di-display yung user post at comment
         $posts = Post::with(['user', 'comments.user', 'reactions'])
-        
         ->latest()
         ->paginate();
+
+        
+        $posts->getCollection()->transform(function ($post) {
+        $post->user_reaction = $post->reactions
+            ->where('user_id', Auth::id())
+            ->first()?->reaction ?? null;
+        return $post;
+    });
 
         return Inertia::render('AllPost',[
             'posts' => $posts

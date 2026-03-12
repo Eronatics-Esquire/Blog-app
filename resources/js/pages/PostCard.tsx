@@ -10,14 +10,16 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
-
+import Reaction from './components/Reaction';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 type Comment = { comment: string; user: { name: string } };
 
-type Post = {
+export type Post = {
     id: number;
     title: string;
     post: string;
+    user_reaction: string;
     user: { id: number; name: string };
     comments?: Comment[];
 };
@@ -76,7 +78,12 @@ export default function PostCard({ post }: { post: Post }) {
 
             <CardContent>
                 <p className="text-gray-600">{post.post}</p>
-
+                <TooltipProvider>
+                    <Reaction
+                        postId={post.id}
+                        initialReaction={post.user_reaction}
+                    />
+                </TooltipProvider>
                 {/* <div className="mt-3">
                     <Reaction />
                 </div> */}

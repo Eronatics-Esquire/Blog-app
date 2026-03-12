@@ -26,6 +26,7 @@ type Post = {
     id: number;
     title: string;
     post: string;
+    user_reaction: string
     user: { id: number; name: string };
     comments?: Comment[];
 };
@@ -48,7 +49,6 @@ export default function Dashboard({ posts }: Props) {
             preserveScroll: true,
         });
     };
-    console.log(postData);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
