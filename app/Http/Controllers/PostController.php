@@ -85,8 +85,15 @@ class PostController extends Controller
 
     public function update(PostRequest $request, Post $post)
     {
-        //
+        
     }
+    public function destroy(Post $post)
+{
+    $post->reactions()->delete();
+    $post->comments()->delete();
+    $post->delete();
 
+    return back();
+}
 
 }
