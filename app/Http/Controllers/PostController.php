@@ -93,11 +93,19 @@ class PostController extends Controller
     }
     public function destroy(Post $post)
 {
+    // Check if the current user owns the post
+    if ($post->user_id !== Auth::id()) {
+        abort(403, 'You are not allowed to delete this post.');
+    }
+
+    // Delete reactions and comments
     $post->reactions()->delete();
     $post->comments()->delete();
     $post->delete();
 
+    // Broadcast deletion so all clients update
+    broadcast(new BroadcastEvent(post: null, postId: $post->id));
+
     return back();
 }
-
 }

@@ -44,10 +44,12 @@ export default function Dashboard({ posts }: Props) {
         processing: creatingPost,
         errors: postErrors,
     } = useForm<{ title: string; post: string }>({ title: '', post: '' });
+    
 
     useEchoPublic('posts', '.BroadcastEvent', () => {
         router.reload({ only: ['posts'] });
     });
+
     const handlePostSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         submitPost('/dashboard', {

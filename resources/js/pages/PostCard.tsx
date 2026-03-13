@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage, router } from '@inertiajs/react';
 import {
     Card,
     CardContent,
@@ -13,10 +13,8 @@ import { Trash2 } from 'lucide-react';
 import Reaction from './components/Reaction';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useEchoPublic } from '@laravel/echo-react';
-import { router } from '@inertiajs/react';
 
-type Comment = { comment: string; user: { name: string } };
-
+export type Comment = { comment: string; user: { name: string } };
 export type Post = {
     id: number;
     title: string;
@@ -40,7 +38,6 @@ export default function PostCard({ post }: { post: Post }) {
         delete: destroy,
     } = useForm<{ comment: string }>({ comment: '' });
 
-    // Reload only this post's data when comment or reaction comes in
     useEchoPublic(`posts.${post.id}`, '.BroadcastEvent', () => {
         router.reload({ only: ['posts'] });
     });
@@ -56,7 +53,9 @@ export default function PostCard({ post }: { post: Post }) {
 
     const DeletePost = () => {
         if (confirm('Are you sure you want to delete this post?')) {
-            destroy(`/posts/${post.id}`);
+            destroy(`/posts/${post.id}`, {
+                onSuccess: () => router.reload({ only: ['posts'] }),
+            });
         }
     };
 
@@ -93,7 +92,7 @@ export default function PostCard({ post }: { post: Post }) {
                 </TooltipProvider>
 
                 <div className="mt-4 max-h-40 overflow-y-auto border-t pt-4">
-                    {post.comments && post.comments.length > 0 ? (
+                    {post.comments?.length ? (
                         post.comments.map((c, idx) => (
                             <div
                                 key={idx}
