@@ -25,9 +25,9 @@ class ReactionController extends Controller
         ->first();
         
         if ($request->reaction === '' || $request->reaction === null) {
-        $reaction?->delete();
-        return redirect()->back();
-    }
+            // Delete reaction if user wants to remove it
+            $reaction?->delete();
+        } else {
         
 
 
@@ -45,6 +45,7 @@ class ReactionController extends Controller
          ]);
 
         }
+    }
         $post->load('reactions');
         broadcast(new BroadcastEvent(post: $post));
 

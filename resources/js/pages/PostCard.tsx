@@ -39,7 +39,7 @@ export default function PostCard({ post }: { post: Post }) {
     } = useForm<{ comment: string }>({ comment: '' });
 
     useEchoPublic(`posts.${post.id}`, '.BroadcastEvent', () => {
-        router.reload({ only: ['posts'] });
+        router.reload({ only: ['posts']});
     });
 
     const handleCommentSubmit = (e: React.FormEvent) => {
