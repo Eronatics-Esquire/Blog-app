@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class PostController extends Controller
+
 {
 
     public function index()
@@ -65,7 +66,7 @@ class PostController extends Controller
         // di-display yung user post at comment
         $posts = Post::with(['user', 'comments.user', 'reactions'])
         ->latest()
-        ->paginate();
+        ->paginate(5);
 
         // didisplay neto yung mga reaction at yung sinelect na reaction
         $posts->getCollection()->transform(function ($post) {
@@ -83,8 +84,8 @@ class PostController extends Controller
         });
 
         return Inertia::render('AllPost',[
-            'posts' => $posts
-        ]);
+            'posts' => Inertia::scroll($posts)        
+            ]);
     }
 
     public function update(PostRequest $request, Post $post)
