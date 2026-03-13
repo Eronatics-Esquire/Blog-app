@@ -4,6 +4,16 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../css/app.css';
 import { initializeTheme } from '@/hooks/use-appearance';
+import { configureEcho } from '@laravel/echo-react';
+
+configureEcho({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    forceTLS: true,
+    
+});
+
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -26,6 +36,7 @@ createInertiaApp({
     progress: {
         color: '#4B5563',
     },
+    
 });
 
 // This will set light / dark mode on load...

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BroadcastEvent;
 use App\Http\Requests\CommentRequest;
 use App\Models\Comment;
 use App\Models\Post;
@@ -32,11 +33,13 @@ class CommentController extends Controller
         }
         $post = Post::findOrFail($postId);
 
-        $post->comments()->create([
+        $comment = $post->comments()->create([
             'user_id' => Auth::id(),
             'post_id' => $request->post_id,
             'comment' => $request->comment,
         ]);
+        $comment->load('user');
+        broadcast(new BroadcastEvent(comment: $comment));
     return redirect()->back();
     }
 

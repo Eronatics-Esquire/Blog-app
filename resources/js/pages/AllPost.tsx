@@ -1,8 +1,22 @@
-
+import { useEchoPublic } from '@laravel/echo-react';
 import { Props } from './dashboard';
 import PostCard from './PostCard';
+import { router } from '@inertiajs/react';
 
 const AllPost = ({ posts }: Props) => {
+
+    // new post created
+    useEchoPublic('posts', '.BroadcastEvent', () => {
+        router.reload({ only: ['posts'] });
+    });
+
+    // listen to updates of each post
+    // posts.data.forEach((post) => {
+    //     useEchoPublic(`posts.${post.id}`, '.BroadcastEvent', () => {
+    //         router.reload({ only: ['posts'] });
+    //     });
+    // });
+
     return (
         <div>
             <div>AllPost</div>

@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import PostCard from './PostCard'; // <- import the new component
 import React from 'react';
+import { useEcho, useEchoPublic } from '@laravel/echo-react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Posts', href: dashboard() }];
 
@@ -27,8 +28,8 @@ type Post = {
     title: string;
     post: string;
     user_reaction: string;
-    reaction_counts: Record<string, number> 
-    total_counts: number
+    reaction_counts: Record<string, number>;
+    total_counts: number;
     user: { id: number; name: string };
     comments?: Comment[];
 };
@@ -44,6 +45,9 @@ export default function Dashboard({ posts }: Props) {
         errors: postErrors,
     } = useForm<{ title: string; post: string }>({ title: '', post: '' });
 
+    useEchoPublic('posts', '.BroadcastEvent', () => {
+        router.reload({ only: ['posts'] });
+    });
     const handlePostSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         submitPost('/dashboard', {
@@ -124,7 +128,7 @@ export default function Dashboard({ posts }: Props) {
                             No posts yet.
                         </p>
                     ) : (
-                        posts.data.map((p) => <PostCard key={p.id} post={p}  />)
+                        posts.data.map((p) => <PostCard key={p.id} post={p} />)
                     )}
                 </div>
             </div>

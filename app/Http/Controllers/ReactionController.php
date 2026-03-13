@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BroadcastEvent;
 use App\Models\Post;
 use App\Models\Reaction;
 use Illuminate\Http\Request;
@@ -44,6 +45,9 @@ class ReactionController extends Controller
          ]);
 
         }
+        $post->load('reactions');
+        broadcast(new BroadcastEvent(post: $post));
+
             return redirect()->back();
     }
 }

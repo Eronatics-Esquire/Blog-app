@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BroadcastEvent;
 use App\Http\Requests\PostRequest;
 use App\Models\Post;
 
@@ -20,9 +21,10 @@ class PostController extends Controller
         }
         // display yung post created at makakakita lang is yung user na gumawa
         $posts = Post::with(['user', 'comments.user', 'reactions.user'])
-
+        ->where('user_id', Auth::id())
         ->latest()
         ->paginate();
+        
 
         // didisplay neto yung mga reaction at yung sinelect na reaction
         // reaction ng current user
@@ -52,7 +54,9 @@ class PostController extends Controller
     public function store(PostRequest $request)
     {
         // create ng post yung user
-        Auth::user()->posts()->create($request->validated());
+        $post= Auth::user()->posts()->create($request->validated());
+        $post->load('user', 'reactions');
+        broadcast(new BroadcastEvent(post: $post));
         return redirect()->route('dashboard');
     }
 

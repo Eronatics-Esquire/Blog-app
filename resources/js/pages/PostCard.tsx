@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import Reaction from './components/Reaction';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { useEchoPublic } from '@laravel/echo-react';
+import { router } from '@inertiajs/react';
 
 type Comment = { comment: string; user: { name: string } };
 
@@ -20,8 +22,8 @@ export type Post = {
     title: string;
     post: string;
     user_reaction: string;
-    reaction_counts: Record<string, number> 
-    total_counts: number
+    reaction_counts: Record<string, number>;
+    total_counts: number;
     user: { id: number; name: string };
     comments?: Comment[];
 };
@@ -32,28 +34,29 @@ export default function PostCard({ post }: { post: Post }) {
     const {
         data,
         setData,
-        delete: destroy,
         post: submitComment,
         processing,
         reset,
+        delete: destroy,
     } = useForm<{ comment: string }>({ comment: '' });
+
+    // Reload only this post's data when comment or reaction comes in
+    useEchoPublic(`posts.${post.id}`, '.BroadcastEvent', () => {
+        router.reload({ only: ['posts'] });
+    });
 
     const handleCommentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         submitComment(`/comments/${post.id}`, {
             method: 'post',
             onSuccess: () => reset(),
+            preserveScroll: true,
         });
     };
 
-    // ✅ Handle post deletion
     const DeletePost = () => {
         if (confirm('Are you sure you want to delete this post?')) {
-            destroy(`/posts/${post.id}`, {
-                onSuccess: () => {
-                    console.log('Post deleted successfully');
-                },
-            });
+            destroy(`/posts/${post.id}`);
         }
     };
 
@@ -86,7 +89,6 @@ export default function PostCard({ post }: { post: Post }) {
                         initialReaction={post.user_reaction}
                         reactionCounts={post.reaction_counts}
                         totalReactions={post.total_counts}
-      
                     />
                 </TooltipProvider>
 
@@ -107,6 +109,7 @@ export default function PostCard({ post }: { post: Post }) {
                         <p className="text-gray-400">No comments yet.</p>
                     )}
                 </div>
+
                 <form
                     onSubmit={handleCommentSubmit}
                     className="mt-4 flex flex-col gap-2"
