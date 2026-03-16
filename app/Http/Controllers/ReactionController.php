@@ -16,20 +16,15 @@ class ReactionController extends Controller
         if (!Auth()->check()){
             return redirect()->back();
         }
-
-        
-
         // checheck nya if ang user ay nakapag react na
         $reaction = $post->reactions()
         ->where('user_id', Auth::id())
         ->first();
-        
+
         if ($request->reaction === '' || $request->reaction === null) {
             // Delete reaction if user wants to remove it
             $reaction?->delete();
         } else {
-        
-
 
         // dito ay pwede update ng user ang reaction na gusto nya
         if ($reaction) {
@@ -38,6 +33,7 @@ class ReactionController extends Controller
 
             ]);
         } else {
+            
         // ito naman ay dito na gagawa yung reaction if di pa naka react
          $post->reactions()->create([
             'user_id' => Auth::id(),
