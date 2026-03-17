@@ -5,7 +5,7 @@ import { InfiniteScroll, router } from '@inertiajs/react';
 
 const AllPost = ({ posts }: Props) => {
     useEchoPublic('posts', '.BroadcastEvent', () => {
-        router.reload({ only: ['posts'] });
+        router.reload({ only: ['posts'], reset: ['posts'] });
     });
 
     return (

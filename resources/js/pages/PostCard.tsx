@@ -39,7 +39,7 @@ export default function PostCard({ post }: { post: Post }) {
     } = useForm<{ comment: string }>({ comment: '' });
 
     useEchoPublic(`posts.${post.id}`, '.BroadcastEvent', () => {
-        router.reload({ only: ['posts']});
+        router.reload({ only: ['posts'], reset: ['posts'] });
     });
 
     const handleCommentSubmit = (e: React.FormEvent) => {
@@ -54,7 +54,8 @@ export default function PostCard({ post }: { post: Post }) {
     const DeletePost = () => {
         if (confirm('Are you sure you want to delete this post?')) {
             destroy(`/posts/${post.id}`, {
-                onSuccess: () => router.reload({ only: ['posts'] }),
+                onSuccess: () =>
+                    router.reload({ only: ['posts'], reset: ['posts'] }),
             });
         }
     };
