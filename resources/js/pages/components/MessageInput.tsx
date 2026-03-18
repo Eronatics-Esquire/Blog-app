@@ -30,7 +30,7 @@ export const MessageInput = ({ conversationId }: { conversationId: number }) => 
                 placeholder="Type a message..."
             />
             <button
-                disabled={processing}
+                disabled={false}
                 className="rounded-lg bg-blue-500 px-4 py-2 text-white"
             >
                 Send
