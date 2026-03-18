@@ -44,7 +44,7 @@ export default function Chat() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Messages" />
             <div className="flex h-full bg-gray-100">
-                {/* SIDEBAR */}
+                {/* ito yung side bar */}
                 <div className="w-1/4 overflow-y-auto border-r bg-white">
                     <div className="border-b p-4 font-bold">Chats</div>
 
@@ -52,7 +52,6 @@ export default function Chat() {
                         const existingConvo = conversations?.find((c: any) =>
                             c.users.some((u: any) => u.id === user.id),
                         );
-
                         const lastMessage =
                             existingConvo?.messages?.[
                                 existingConvo.messages.length - 1
@@ -61,7 +60,6 @@ export default function Chat() {
                         const preview = lastMessage
                             ? `${isMe ? 'You' : user.name}: ${lastMessage.message}`
                             : 'Start a chat';
-
                         return (
                             <div
                                 key={user.id}
@@ -90,22 +88,17 @@ export default function Chat() {
                         );
                     })}
                 </div>
-
-                {/* CHAT AREA */}
+                {/* ito naman chat area */}
                 <div className="flex flex-1 flex-col">
-                    {/* HEADER */}
                     <div className="border-b bg-white p-4 font-semibold">
                         {otherUser?.name || 'Select a chat'}
                     </div>
-
-                    {/* MESSAGES */}
                     <div className="flex flex-1 flex-col-reverse gap-3 overflow-y-auto p-4">
                         {messages
                             .slice() // copy array so we don't mutate original
                             .reverse() // show oldest at top
                             .map((msg: any) => {
                                 const mine = msg.user_id === auth.user.id;
-
                                 return (
                                     <div
                                         key={msg.id}
@@ -125,8 +118,7 @@ export default function Chat() {
                             })}
                         <div ref={bottomRef} />
                     </div>
-
-                    {/* INPUT */}
+                    {/* input para sa chats */}
                     {conversationId && (
                         <form
                             onSubmit={submit}
