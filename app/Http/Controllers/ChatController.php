@@ -73,15 +73,20 @@ class ChatController extends Controller
         }
         return redirect("/messages/{$conversation->id}");
     }
-    public function send (Request $request) {
-        Message::create([
+    public function send(Request $request)
+{
+    if (!$request->conversation_id) {
+        return back()->with('error', 'Conversation ID is missing.');
+    }
+
+    $message = Message::create([
         'conversation_id' => $request->conversation_id,
         'user_id' => Auth::id(),
         'message' => $request->message,
-        ]);
+    ]);
 
-        return back();
-    }
+    return redirect()->back();
+}
     public function destroy(Message $message)
     {
         //

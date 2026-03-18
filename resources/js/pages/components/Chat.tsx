@@ -16,7 +16,7 @@ export default function Chat() {
 
     const { data, setData, post, processing, reset } = useForm({
         message: '',
-        conversation_id: conversationId,
+        conversation_id: conversationId ,
     });
 
     const bottomRef = useRef<HTMLDivElement | null>(null);
