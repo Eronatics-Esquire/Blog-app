@@ -79,7 +79,7 @@ class ChatController extends Controller
         return back()->with('error', 'Conversation ID is missing.');
     }
 
-    $message = Message::create([
+    Message::create([
         'conversation_id' => $request->conversation_id,
         'user_id' => Auth::id(),
         'message' => $request->message,

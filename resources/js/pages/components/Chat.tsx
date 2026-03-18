@@ -2,9 +2,14 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { usePage, useForm, router, Head } from '@inertiajs/react';
 import { useRef } from 'react';
+import MessageInput from './MessageInput';
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Messages', href: '/messages' },
 ];
+
+
+
 export default function Chat() {
     const {
         conversations,
@@ -13,24 +18,6 @@ export default function Chat() {
         auth,
         users = [],
     } = usePage().props as any;
-
-    const { data, setData, post, processing, reset } = useForm({
-        message: '',
-        conversation_id: conversationId ,
-    });
-
-    const bottomRef = useRef<HTMLDivElement | null>(null);
-
-    function submit(e: any) {
-        e.preventDefault();
-        post('/messages/send', {
-            preserveScroll: true,
-            onSuccess: () => {
-                reset('message');
-                bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-            },
-        });
-    }
 
     const activeConversation = conversations?.find(
         (c: any) => c.id === conversationId,
@@ -44,10 +31,9 @@ export default function Chat() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Messages" />
             <div className="flex h-full bg-gray-100">
-                {/* ito yung side bar */}
+                {/* sidebar */}
                 <div className="w-1/4 overflow-y-auto border-r bg-white">
                     <div className="border-b p-4 font-bold">Chats</div>
-
                     {users.map((user: any) => {
                         const existingConvo = conversations?.find((c: any) =>
                             c.users.some((u: any) => u.id === user.id),
@@ -65,38 +51,31 @@ export default function Chat() {
                                 key={user.id}
                                 onClick={() => {
                                     if (existingConvo) {
-                                        router.get(
-                                            `/messages/${existingConvo.id}`,
-                                        );
+                                        router.get(`/messages/${existingConvo.id}`);
                                     } else {
-                                        router.post(
-                                            `/messages/find-or-create/${user.id}`,
-                                        );
+                                        router.post(`/messages/find-or-create/${user.id}`);
                                     }
                                 }}
                                 className={`cursor-pointer p-4 hover:bg-gray-100 ${
-                                    existingConvo?.id === conversationId
-                                        ? 'bg-gray-200'
-                                        : ''
+                                    existingConvo?.id === conversationId ? 'bg-gray-200' : ''
                                 }`}
                             >
                                 <div className="font-semibold">{user.name}</div>
-                                <div className="truncate text-xs text-gray-600">
-                                    {preview}
-                                </div>
+                                <div className="truncate text-xs text-gray-600">{preview}</div>
                             </div>
                         );
                     })}
                 </div>
-                {/* ito naman chat area */}
+
+                {/* chat area */}
                 <div className="flex flex-1 flex-col">
                     <div className="border-b bg-white p-4 font-semibold">
                         {otherUser?.name || 'Select a chat'}
                     </div>
                     <div className="flex flex-1 flex-col-reverse gap-3 overflow-y-auto p-4">
                         {messages
-                            .slice() // copy array so we don't mutate original
-                            .reverse() // show oldest at top
+                            .slice()
+                            .reverse()
                             .map((msg: any) => {
                                 const mine = msg.user_id === auth.user.id;
                                 return (
@@ -106,9 +85,7 @@ export default function Chat() {
                                     >
                                         <div
                                             className={`max-w-xs rounded-lg px-4 py-2 ${
-                                                mine
-                                                    ? 'bg-blue-500 text-white'
-                                                    : 'bg-gray-200'
+                                                mine ? 'bg-blue-500 text-white' : 'bg-gray-200'
                                             }`}
                                         >
                                             {msg.message}
@@ -116,30 +93,11 @@ export default function Chat() {
                                     </div>
                                 );
                             })}
-                        <div ref={bottomRef} />
                     </div>
-                    {/* input para sa chats */}
+
+                    {/* key forces full remount when conversation changes */}
                     {conversationId && (
-                        <form
-                            onSubmit={submit}
-                            className="flex gap-2 border-t bg-white p-4"
-                        >
-                            <input
-                                type="text"
-                                value={data.message}
-                                onChange={(e) =>
-                                    setData('message', e.target.value)
-                                }
-                                className="flex-1 rounded-lg border px-3 py-2"
-                                placeholder="Type a message..."
-                            />
-                            <button
-                                disabled={processing}
-                                className="rounded-lg bg-blue-500 px-4 py-2 text-white"
-                            >
-                                Send
-                            </button>
-                        </form>
+                        <MessageInput key={conversationId} conversationId={conversationId} />
                     )}
                 </div>
             </div>
