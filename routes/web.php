@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ReactionController;
@@ -23,4 +24,9 @@ Route::post('/posts/{post}/react', [ReactionController::class, 'react'])
     ->middleware('auth');
 Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
 Route::get('/posts', [PostController::class, 'show'])->name('posts.show');
+
+Route::get('/messages', [ChatController::class, 'index']);
+Route::get('/messages/{conversationId}', [ChatController::class, 'messages']);
+Route::post('/messages/send', [ChatController::class, 'send']);
+Route::post('/messages/find-or-create/{userId}', [ChatController::class, 'findOrCreate']);
 require __DIR__.'/settings.php';
