@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 Route::post('/dashboard', [PostController::class, 'store'])->middleware('auth');
+Route::put('/posts/{post}', [PostController::class, 'update'])->middleware('auth');
 Route::get('/dashboard', [PostController::class, 'index'])->name('dashboard')->middleware('auth');
 Route::post('/comments/{post}', [CommentController  ::class, 'store'])->name('comments.store');
 Route::post('/posts/{post}/react', [ReactionController::class, 'react'])

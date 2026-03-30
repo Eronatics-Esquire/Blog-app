@@ -89,6 +89,6 @@ class ChatController extends Controller
 }
     public function destroy(Message $message)
     {
-        //
+        
     }
 }

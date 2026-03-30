@@ -16,9 +16,9 @@ import { Field, FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import PostCard from './PostCard'; // <- import the new component
+import PostCard from './PostCard';
 import React from 'react';
-import { useEcho, useEchoPublic } from '@laravel/echo-react';
+import { useEchoPublic } from '@laravel/echo-react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Posts', href: dashboard() }];
 
@@ -43,8 +43,8 @@ export default function Dashboard({ posts }: Props) {
         reset: resetPost,
         processing: creatingPost,
         errors: postErrors,
+        delete: destroy,
     } = useForm<{ title: string; post: string }>({ title: '', post: '' });
-    
 
     useEchoPublic('posts', '.BroadcastEvent', () => {
         router.reload({ only: ['posts'] });
@@ -56,6 +56,15 @@ export default function Dashboard({ posts }: Props) {
             onSuccess: () => resetPost(),
             preserveScroll: true,
         });
+    };
+
+    const DeletePost = (post: Post) => {
+        if (confirm('Are you sure you want to delete this post?')) {
+            destroy(`/posts/${post.id}`, {
+                onSuccess: () =>
+                    router.reload({ only: ['posts'], reset: ['posts'] }),
+            });
+        }
     };
 
     return (
@@ -76,7 +85,6 @@ export default function Dashboard({ posts }: Props) {
                                     when you&apos;re done.
                                 </DialogDescription>
                             </DialogHeader>
-
                             <FieldGroup>
                                 <Field>
                                     <Label>Title</Label>
@@ -107,7 +115,6 @@ export default function Dashboard({ posts }: Props) {
                                     )}
                                 </Field>
                             </FieldGroup>
-
                             <DialogFooter>
                                 <div className="flex w-full justify-center">
                                     <Button
@@ -123,14 +130,19 @@ export default function Dashboard({ posts }: Props) {
                     </DialogContent>
                 </Dialog>
 
-                {/* Display Posts */}
                 <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {!posts || posts.data.length === 0 ? (
                         <p className="col-span-full text-center text-gray-500">
                             No posts yet.
                         </p>
                     ) : (
-                        posts.data.map((p) => <PostCard key={p.id} post={p} />)
+                        posts.data.map((p) => (
+                            <PostCard
+                                key={p.id}
+                                post={p}
+                                onDelete={DeletePost}
+                            />
+                        ))
                     )}
                 </div>
             </div>

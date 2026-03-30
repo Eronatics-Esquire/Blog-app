@@ -58,7 +58,7 @@ class PostController extends Controller
         $post= Auth::user()->posts()->create($request->validated());
         $post->load('user', 'reactions');
         broadcast(new BroadcastEvent(post: $post));
-        return redirect()->route('dashboard');
+        return redirect()->back();
     }
 
     public function show(Post $post)
@@ -90,7 +90,10 @@ class PostController extends Controller
 
     public function update(PostRequest $request, Post $post)
     {
-        
+        $post->update($request->validated());
+        $post->load('user', 'reactions');
+        broadcast(new BroadcastEvent(post: $post));
+        return redirect()->back();
     }
     public function destroy(Post $post)
 {
