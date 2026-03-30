@@ -16,18 +16,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-Route::post('/dashboard', [PostController::class, 'store'])->middleware('auth');
-Route::put('/posts/{post}', [PostController::class, 'update'])->middleware('auth');
-Route::get('/dashboard', [PostController::class, 'index'])->name('dashboard')->middleware('auth');
 Route::post('/comments/{post}', [CommentController  ::class, 'store'])->name('comments.store');
 Route::post('/posts/{post}/react', [ReactionController::class, 'react'])
     ->name('posts.react')
     ->middleware('auth');
-Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
-Route::get('/posts', [PostController::class, 'show'])->name('posts.show');
 
-Route::get('/messages', [ChatController::class, 'index']);
-Route::get('/messages/{conversationId}', [ChatController::class, 'messages']);
-Route::post('/messages/send', [ChatController::class, 'send']);
-Route::post('/messages/find-or-create/{userId}', [ChatController::class, 'findOrCreate']);
+
+
+
 require __DIR__.'/settings.php';
+require __DIR__.'/posts.php';
+require __DIR__.'/chats.php';
