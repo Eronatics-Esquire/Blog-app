@@ -14,7 +14,7 @@ type Props = {
 
 export default function FBnavbar({ user }: Props) {
     return (
-        <div className="flex w-full items-center justify-between bg-white p-4">
+        <div className="sticky top-0 z-50 flex w-full items-center justify-between bg-white p-4 shadow">
             {/* Left side: Logo */}
             <Link href="/dashboard">
                 <div className="ml-8 flex items-center">
@@ -40,14 +40,14 @@ export default function FBnavbar({ user }: Props) {
             </div>
 
             {/* Right side: User dropdown */}
-            <div className="mr-8 flex items-center">
+            <div className="mr-5 flex items-center cursor-pointer">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-2">
+                        <button className="flex items-center gap-2 cursor-pointer">
                             <UserInfo user={user} showEmail={false} />
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuContent align="end" className="w-56 cursor-pointer">
                         <UserMenuContent user={user} />
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -55,3 +55,4 @@ export default function FBnavbar({ user }: Props) {
         </div>
     );
 }
+ 
