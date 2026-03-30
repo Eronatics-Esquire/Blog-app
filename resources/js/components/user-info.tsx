@@ -20,10 +20,10 @@ export function UserInfo({
                 </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{user.name.charAt(0).toUpperCase()+user.name.slice(1)}</span>
                 {showEmail && (
                     <span className="truncate text-xs text-muted-foreground">
-                        {user.email}
+                        {user.email.charAt(0).toUpperCase() +user.email.slice(1)}
                     </span>
                 )}
             </div>

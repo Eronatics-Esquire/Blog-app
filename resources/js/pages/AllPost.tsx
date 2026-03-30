@@ -1,12 +1,17 @@
 import { useEchoPublic } from '@laravel/echo-react';
-import { Props } from './dashboard';
 import PostCard, { Post } from './PostCard';
-import { InfiniteScroll, router, useForm } from '@inertiajs/react';
+import { InfiniteScroll, router, useForm, usePage } from '@inertiajs/react';
 import FBnavbar from './components/FBnavbar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { User } from '@/types';
+type Props = {
+    posts: { data: Post[] };
+    user: User;
+};
 
-const AllPost = ({ posts }: Props) => {
+const AllPost = ({ posts, user }: Props) => {
+    const { auth } = usePage().props as any;
     useEchoPublic('posts', '.BroadcastEvent', () => {
         router.reload({ only: ['posts'], reset: ['posts'] });
     });
@@ -34,7 +39,7 @@ const AllPost = ({ posts }: Props) => {
 
     return (
         <div>
-            <FBnavbar />
+            <FBnavbar user={auth.user} />
             <div className="flex justify-center bg-red-300 py-4">
                 <form
                     onSubmit={handleSubmit}
