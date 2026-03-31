@@ -7,6 +7,7 @@ import { UserInfo } from '@/components/user-info';
 import { Link } from '@inertiajs/react';
 import { User } from '@/types';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { Bell, MessageCircleIcon } from 'lucide-react';
 
 type Props = {
     user: User;
@@ -17,7 +18,7 @@ export default function FBnavbar({ user }: Props) {
         <div className="sticky top-0 z-50 flex w-full items-center justify-between bg-white p-4 shadow">
             {/* Left side: Logo */}
             <Link href="/dashboard">
-                <div className="ml-8 flex items-center">
+                <div className="ml-1 flex items-center">
                     <div className="flex h-10 w-10 items-center justify-center">
                         <svg
                             className="h-10 w-10"
@@ -30,7 +31,7 @@ export default function FBnavbar({ user }: Props) {
                 </div>
             </Link>
             {/* Center: Facebook text */}
-            <div className="flex flex-1 justify-center">
+            <div className="flex ml-30 items-center justify-center">
                 <Link
                     href="/dashboard"
                     className="text-3xl font-bold text-blue-500"
@@ -40,14 +41,19 @@ export default function FBnavbar({ user }: Props) {
             </div>
 
             {/* Right side: User dropdown */}
-            <div className="mr-5 flex items-center cursor-pointer">
+            <div className="mr-3 flex cursor-pointer gap-3 items-center">
+                <MessageCircleIcon className=''/>
+                <Bell />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-2 cursor-pointer">
+                        <button className="flex cursor-pointer items-center gap-2">
                             <UserInfo user={user} showEmail={false} />
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 cursor-pointer">
+                    <DropdownMenuContent
+                        align="end"
+                        className="w-56 cursor-pointer"
+                    >
                         <UserMenuContent user={user} />
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -55,4 +61,3 @@ export default function FBnavbar({ user }: Props) {
         </div>
     );
 }
- 

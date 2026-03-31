@@ -13,7 +13,7 @@ import { Edit2, Trash2 } from 'lucide-react';
 import Reaction from './components/Reaction';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useEchoPublic } from '@laravel/echo-react';
-import EditPostDialog from './EditPostDialog';
+import EditPostDialog from './components/EditPostDialog';
 
 export type Comment = { comment: string; user: { name: string } };
 export type Post = {
