@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
-import { usePage, router, Head } from '@inertiajs/react';
+import { usePage, router, Head, Link } from '@inertiajs/react';
 import MessageInput from './MessageInput';
 
 export default function Chat() {
@@ -25,7 +25,7 @@ export default function Chat() {
             <div className="flex h-full bg-gray-100">
                 {/* sidebar */}
                 <div className="h-full w-1/5 overflow-y-auto border-r bg-white">
-                    <div className="ml-1 flex flex-1 items-center gap-3 border-b p-4 font-bold">
+                    <Link href={'/dashboard'} className="ml-1 flex flex-1 items-center gap-3 border-b p-4 font-bold">
                         <svg
                             className="size-10"
                             viewBox="0 0 24 24"
@@ -34,7 +34,7 @@ export default function Chat() {
                             <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
                         </svg>
                         Chats
-                    </div>
+                    </Link>
                     {users.map((user: any) => {
                         const existingConvo = conversations?.find((c: any) =>
                             c.users.some((u: any) => u.id === user.id),

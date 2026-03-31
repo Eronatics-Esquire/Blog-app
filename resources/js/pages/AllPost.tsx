@@ -102,6 +102,7 @@ const AllPost = ({ posts, user }: Props) => {
                                 <div>
                                     <Label>Post</Label>
                                     <Textarea
+                                        className="resize-none"
                                         value={data.post}
                                         placeholder="What's in your mind?"
                                         onChange={(e) =>

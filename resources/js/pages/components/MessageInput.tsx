@@ -1,8 +1,12 @@
 import { useForm } from '@inertiajs/react';
-import React, { useRef } from 'react'
+import React, { useRef } from 'react';
 
-export const MessageInput = ({ conversationId }: { conversationId: number }) => {
-  const { data, setData, post, processing, reset } = useForm({
+export const MessageInput = ({
+    conversationId,
+}: {
+    conversationId: number;
+}) => {
+    const { data, setData, post, processing, reset } = useForm({
         message: '',
         conversation_id: conversationId,
     });
@@ -30,13 +34,13 @@ export const MessageInput = ({ conversationId }: { conversationId: number }) => 
                 placeholder="Type a message..."
             />
             <button
-                disabled={false}
-                className="rounded-lg bg-blue-500 px-4 py-2 text-white"
+                disabled={processing || data.message === ''}
+                className={`rounded-lg px-4 py-2 text-white transition-colors duration-200 ${processing || data.message === '' ? 'cursor-not-allowed bg-blue-300' : 'bg-blue-500 hover:bg-blue-600'}`}
             >
                 Send
             </button>
         </form>
     );
-}
+};
 
-export default MessageInput
+export default MessageInput;
