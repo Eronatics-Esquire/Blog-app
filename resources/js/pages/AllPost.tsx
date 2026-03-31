@@ -5,6 +5,17 @@ import FBnavbar from './components/FBnavbar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { User } from '@/types';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 type Props = {
     posts: { data: Post[] };
     user: User;
@@ -12,6 +23,7 @@ type Props = {
 
 const AllPost = ({ posts, user }: Props) => {
     const { auth } = usePage().props as any;
+    const userAUTH = auth.user;
     useEchoPublic('posts', '.BroadcastEvent', () => {
         router.reload({ only: ['posts'], reset: ['posts'] });
     });
@@ -41,24 +53,76 @@ const AllPost = ({ posts, user }: Props) => {
         <div>
             <FBnavbar user={auth.user} />
             <div className="flex justify-center bg-red-300 py-4">
-                <form
-                    onSubmit={handleSubmit}
-                    className="flex w-96 flex-col justify-center border-4 bg-amber-100"
-                >
-                    <Input
-                        className="w-full text-center"
-                        value={data.post}
-                        onChange={(e) => setData('post', e.target.value)}
-                        placeholder="Create Posts..."
-                    />
-                    <Button
-                        type="submit"
-                        className="w-36"
-                        disabled={processing}
+                <Dialog>
+                    <form
+                        onSubmit={handleSubmit}
+                        className="flex w-96 flex-col gap-2 border-4 bg-amber-100 p-4"
                     >
-                        Post
-                    </Button>
-                </form>
+                        {/* INPUT CLICK = OPEN DIALOG */}
+                        <DialogTrigger asChild>
+                            <div className="w-full cursor-pointer rounded-md border px-3 py-2 text-sm text-muted-foreground">
+                                {data.post
+                                    ? data.post
+                                    : `What's on your mind? ${
+                                          userAUTH?.name
+                                              ? userAUTH.name
+                                                    .charAt(0)
+                                                    .toUpperCase() +
+                                                userAUTH.name.slice(1)
+                                              : 'Guest'
+                                      }`}
+                            </div>
+                        </DialogTrigger>
+
+                        <Button
+                            type="submit"
+                            className="w-36"
+                            disabled={processing}
+                        >
+                            Post
+                        </Button>
+
+                        {/* MODAL */}
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Create Post</DialogTitle>
+                            </DialogHeader>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <Label>Title</Label>
+                                    <Input
+                                        value={data.title}
+                                        onChange={(e) =>
+                                            setData('title', e.target.value)
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Post</Label>
+                                    <Textarea
+                                        value={data.post}
+                                        placeholder="What's in your mind?"
+                                        onChange={(e) =>
+                                            setData('post', e.target.value)
+                                        }
+                                    />
+                                </div>
+                            </div>
+
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="outline">Close</Button>
+                                </DialogClose>
+
+                                <DialogClose asChild>
+                                    <Button>Done</Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </form>
+                </Dialog>
             </div>
             <div className="flex justify-center bg-amber-600">
                 <div className="mt-6 flex w-xl max-w-2xl flex-col gap-4 bg-amber-200">
