@@ -33,7 +33,7 @@ const mainNavItems: NavItem[] = [
         icon: MailIcon,
     },
     
-];
+];     
 
 const footerNavItems: NavItem[] = [
     // {
