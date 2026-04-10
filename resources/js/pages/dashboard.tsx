@@ -6,33 +6,21 @@ import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogClose,
 } from '@/components/ui/dialog';
-import { Field, FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import PostCard from './PostCard';
+import PostCard, { Post } from './PostCard';
 import React from 'react';
 import { useEchoPublic } from '@laravel/echo-react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Posts', href: dashboard() }];
 
-type Comment = { comment: string; user: { name: string } };
-type Post = {
-    id: number;
-    title: string;
-    post: string;
-    user_reaction: string;
-    reaction_counts: Record<string, number>;
-    total_counts: number;
-    user: { id: number; name: string };
-    comments?: Comment[];
-};
 export type Props = { posts: { data: Post[] } };
 
 export default function Dashboard({ posts }: Props) {
@@ -44,7 +32,11 @@ export default function Dashboard({ posts }: Props) {
         processing: creatingPost,
         errors: postErrors,
         delete: destroy,
-    } = useForm<{ title: string; post: string }>({ title: '', post: '' });
+    } = useForm<{ title: string; post: string; images: File[] }>({
+        title: '',
+        post: '',
+        images: [],
+    });
 
     useEchoPublic('posts', '.BroadcastEvent', () => {
         router.reload({ only: ['posts'] });
@@ -55,6 +47,7 @@ export default function Dashboard({ posts }: Props) {
         submitPost('/dashboard', {
             onSuccess: () => resetPost(),
             preserveScroll: true,
+            forceFormData: true,
         });
     };
 
@@ -74,57 +67,115 @@ export default function Dashboard({ posts }: Props) {
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Button variant="outline">Create Post</Button>
+                        <Button
+                            variant="outline"
+                            className="w-full max-w-lg rounded-full border border-[#ccd0d5] bg-[#f0f2f5] py-5 text-left text-sm font-normal text-[#65676b] hover:bg-[#e4e6eb]"
+                        >
+                            What&apos;s on your mind?
+                        </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-sm">
-                        <form onSubmit={handlePostSubmit}>
-                            <DialogHeader>
-                                <DialogTitle>Create Post</DialogTitle>
-                                <DialogDescription>
-                                    Make changes to your post here. Click save
-                                    when you&apos;re done.
-                                </DialogDescription>
+                    <DialogContent className="sm:max-w-lg">
+                        <form onSubmit={handlePostSubmit} className="space-y-5">
+                            <DialogHeader className="border-b pb-3">
+                                <DialogTitle className="text-center text-xl font-semibold text-[#050505]">
+                                    Create post
+                                </DialogTitle>
                             </DialogHeader>
-                            <FieldGroup>
-                                <Field>
-                                    <Label>Title</Label>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <Label className="text-[#65676b]">Title</Label>
                                     <Input
+                                        className="mt-1 border-[#ccd0d5] focus-visible:ring-[#1877f2]"
                                         value={postData.title}
                                         onChange={(e) =>
                                             setPostData('title', e.target.value)
                                         }
                                     />
                                     {postErrors.title && (
-                                        <p className="text-sm text-red-500">
+                                        <p className="mt-1 text-sm text-red-500">
                                             {postErrors.title}
                                         </p>
                                     )}
-                                </Field>
-                                <Field>
-                                    <Label>Post</Label>
+                                </div>
+
+                                <div>
+                                    <Label className="text-[#65676b]">Post</Label>
                                     <Textarea
+                                        className="mt-1 min-h-36 resize-none border-[#ccd0d5] text-base focus-visible:ring-[#1877f2]"
                                         value={postData.post}
                                         onChange={(e) =>
                                             setPostData('post', e.target.value)
                                         }
                                     />
                                     {postErrors.post && (
-                                        <p className="text-sm text-red-500">
+                                        <p className="mt-1 text-sm text-red-500">
                                             {postErrors.post}
                                         </p>
                                     )}
-                                </Field>
-                            </FieldGroup>
-                            <DialogFooter>
-                                <div className="flex w-full justify-center">
-                                    <Button
-                                        type="submit"
-                                        className="w-36"
-                                        disabled={creatingPost}
-                                    >
-                                        Post
-                                    </Button>
                                 </div>
+
+                                <div>
+                                    <Label className="text-[#65676b]">Photo</Label>
+                                    <Input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        className="mt-1 border-[#ccd0d5] focus-visible:ring-[#1877f2]"
+                                        onChange={(e) =>
+                                            setPostData(
+                                                'images',
+                                                Array.from(
+                                                    e.target.files ?? [],
+                                                ),
+                                            )
+                                        }
+                                    />
+                                    {postData.images.length > 0 && (
+                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                            {postData.images.map(
+                                                (image, idx) => (
+                                                    <img
+                                                        key={`${image.name}-${idx}`}
+                                                        src={URL.createObjectURL(
+                                                            image,
+                                                        )}
+                                                        alt={image.name}
+                                                        className="h-20 w-full rounded-md border object-cover"
+                                                    />
+                                                ),
+                                            )}
+                                        </div>
+                                    )}
+                                    {(postErrors as any).images && (
+                                        <p className="mt-1 text-sm text-red-500">
+                                            {(postErrors as any).images}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <DialogFooter className="border-t pt-4">
+                                <DialogClose asChild>
+                                    <Button
+                                        variant="outline"
+                                        type="button"
+                                        className="rounded-md border-[#ccd0d5]"
+                                    >
+                                        Cancel
+                                    </Button>
+                                </DialogClose>
+                                <Button
+                                    type="submit"
+                                    className="bg-[#1877f2] hover:bg-[#166fe5]"
+                                    disabled={
+                                        creatingPost ||
+                                        (postData.post.trim() === '' &&
+                                            postData.images.length === 0)
+                                    }
+                                >
+                                    {creatingPost ? 'Posting...' : 'Post'}
+                                </Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>

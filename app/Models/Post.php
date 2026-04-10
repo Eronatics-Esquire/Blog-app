@@ -10,7 +10,8 @@ class Post extends Model
     protected $fillable = [
         'user_id',
         'title',
-        'post'
+        'post',
+        'image_path',
     ];
 
 
@@ -20,6 +21,11 @@ class Post extends Model
 
     public function reactions(){
         return $this->hasMany(Reaction::class);
+    }
+
+    public function images()
+    {
+        return $this->hasMany(PostImage::class);
     }
 
     public function user(){

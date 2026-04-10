@@ -1,5 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import React, { useRef } from 'react';
+import { SendHorizontal } from 'lucide-react';
 
 export const MessageInput = ({
     conversationId,
@@ -25,20 +26,27 @@ export const MessageInput = ({
     }
 
     return (
-        <form onSubmit={submit} className="flex gap-2 border-t bg-white p-4">
-            <input
-                type="text"
-                value={data.message}
-                onChange={(e) => setData('message', e.target.value)}
-                className="flex-1 rounded-lg border px-3 py-2"
-                placeholder="Type a message..."
-            />
-            <button
-                disabled={processing || data.message === ''}
-                className={`rounded-lg px-4 py-2 text-white transition-colors duration-200 ${processing || data.message === '' ? 'cursor-not-allowed bg-blue-300' : 'bg-blue-500 hover:bg-blue-600'}`}
-            >
-                Send
-            </button>
+        <form onSubmit={submit} className="border-t border-[#e4e6eb] bg-white px-4 py-3">
+            <div className="flex items-center gap-2 rounded-full bg-[#f0f2f5] px-2 py-1.5">
+                <input
+                    type="text"
+                    value={data.message}
+                    onChange={(e) => setData('message', e.target.value)}
+                    className="flex-1 bg-transparent px-2 text-sm outline-none"
+                    placeholder="Aa"
+                />
+                <button
+                    type="submit"
+                    disabled={processing || data.message.trim() === ''}
+                    className={`rounded-full p-2 transition-colors duration-200 ${
+                        processing || data.message.trim() === ''
+                            ? 'cursor-not-allowed text-blue-300'
+                            : 'text-[#1877f2] hover:bg-blue-50'
+                    }`}
+                >
+                    <SendHorizontal className="h-5 w-5" />
+                </button>
+            </div>
         </form>
     );
 };

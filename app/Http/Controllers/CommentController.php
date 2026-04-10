@@ -35,8 +35,9 @@ class CommentController extends Controller
 
         $comment = $post->comments()->create([
             'user_id' => Auth::id(),
-            'post_id' => $request->post_id,
+            'post_id' => $post->id,
             'comment' => $request->comment,
+            'parent_id' => $request->input('parent_id'),
         ]);
         $comment->load('user');
         broadcast(new BroadcastEvent(comment: $comment));

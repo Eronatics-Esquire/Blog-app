@@ -10,13 +10,12 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { Bell, MessageCircleIcon } from 'lucide-react';
 
 type Props = {
-    user: User;
+    user?: User | null;
 };
 
 export default function FBnavbar({ user }: Props) {
     return (
-        <div className="sticky top-0 z-50 flex w-full items-center justify-between bg-white p-4 shadow">
-            {/* Left side: Logo */}
+        <div className="sticky top-0 z-50 flex w-full items-center justify-between border-b bg-white px-4 py-3 shadow-sm">
             <Link href="/dashboard">
                 <div className="ml-1 flex items-center">
                     <div className="flex h-10 w-10 items-center justify-center">
@@ -30,20 +29,23 @@ export default function FBnavbar({ user }: Props) {
                     </div>
                 </div>
             </Link>
-            {/* Center: Facebook text */}
-            <div className="flex ml-30 items-center justify-center">
+
+            <div className="flex items-center justify-center">
                 <Link
                     href="/dashboard"
-                    className="text-3xl font-bold text-blue-500"
+                    className="text-2xl font-bold text-[#1877F2]"
                 >
                     Facebook
                 </Link>
             </div>
 
-            {/* Right side: User dropdown */}
-            <div className="mr-3 flex cursor-pointer gap-3 items-center">
-                <MessageCircleIcon className=''/>
-                <Bell />
+            <div className="mr-2 flex items-center gap-2">
+                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e4e6eb] text-[#1c1e21]">
+                    <MessageCircleIcon className="h-5 w-5" />
+                </button>
+                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e4e6eb] text-[#1c1e21]">
+                    <Bell className="h-5 w-5" />
+                </button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className="flex cursor-pointer items-center gap-2">
@@ -54,7 +56,7 @@ export default function FBnavbar({ user }: Props) {
                         align="end"
                         className="w-56 cursor-pointer"
                     >
-                        <UserMenuContent user={user} />
+                        {user && <UserMenuContent user={user} />}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>

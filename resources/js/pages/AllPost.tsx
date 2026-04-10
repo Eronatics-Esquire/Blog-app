@@ -25,15 +25,20 @@ type Props = {
 };
 
 const AllPost = ({ posts, user }: Props) => {
-    const { auth } = usePage().props as any;
-    const userAUTH = auth.user;
+    const { auth } = usePage().props as { auth: { user?: User } };
+
     useEchoPublic('posts', '.BroadcastEvent', () => {
         router.reload({ only: ['posts'], reset: ['posts'] });
     });
 
-    const { data, setData, post, reset, processing } = useForm({
+    const { data, setData, post, reset, processing } = useForm<{
+        title: string;
+        post: string;
+        images: File[];
+    }>({
         title: '',
         post: '',
+        images: [],
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -41,6 +46,7 @@ const AllPost = ({ posts, user }: Props) => {
         post('/dashboard', {
             onSuccess: () => reset(),
             preserveScroll: true,
+            forceFormData: true,
         });
     };
 
@@ -52,59 +58,55 @@ const AllPost = ({ posts, user }: Props) => {
         }
     };
 
-    return (
-        <div>
-            <FBnavbar user={auth.user} />
+    const displayName = auth.user?.name ?? 'Guest';
 
-            {/* FACEBOOK LAYOUT */}
-            <div className="mx-auto flex gap-4">
-                {/* LEFT */}
-                <div className="fixed top-18 left-0 hidden h-screen w-1/4 lg:block">
+    return (
+        <div className="min-h-screen bg-[#f0f2f5]">
+            <FBnavbar user={auth.user ?? user} />
+
+            <div className="mx-auto flex w-full max-w-[1600px] gap-4 px-3 py-4">
+                <div className="sticky top-18 hidden h-[calc(100vh-5rem)] w-1/4 lg:block">
                     <FbSideBarLeft />
                 </div>
 
-                {/* CENTER (your existing code unchanged) */}
-                <div className="flex-1 lg:mr-[25%] lg:ml-[25%]">
-                    <div className="flex justify-center bg-red-300 py-4">
+                <div className="mx-auto w-full max-w-2xl flex-1">
+                    <div className="mb-4 rounded-xl border bg-white p-4 shadow-sm">
                         <Dialog>
-                            <form
-                                onSubmit={handleSubmit}
-                                className="flex w-96 flex-col gap-2 border-4 bg-amber-100 p-4"
-                            >
-                                {/* INPUT CLICK = OPEN DIALOG */}
-                                <DialogTrigger asChild>
-                                    <div className="w-full cursor-pointer rounded-md border px-3 py-2 text-sm text-muted-foreground">
-                                        {data.post
-                                            ? data.post
-                                            : `What's on your mind? ${
-                                                  userAUTH?.name
-                                                      ? userAUTH.name
-                                                            .charAt(0)
-                                                            .toUpperCase() +
-                                                        userAUTH.name.slice(1)
-                                                      : 'Guest'
-                                              }`}
-                                    </div>
-                                </DialogTrigger>
-
-                                <Button
-                                    type="submit"
-                                    className="w-36"
-                                    disabled={processing || data.post === ''}
+                            <DialogTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="w-full rounded-full border border-[#ccd0d5] bg-[#f0f2f5] px-4 py-2.5 text-left text-sm text-[#65676b] transition hover:bg-[#e4e6eb]"
                                 >
-                                    Post
-                                </Button>
+                                    {`What's on your mind, ${displayName}?`}
+                                </button>
+                            </DialogTrigger>
 
-                                {/* MODAL */}
-                                <DialogContent className="sm:max-w-md">
-                                    <DialogHeader>
-                                        <DialogTitle>Create Post</DialogTitle>
+                            <DialogContent className="sm:max-w-lg">
+                                <form
+                                    onSubmit={handleSubmit}
+                                    className="space-y-5"
+                                >
+                                    <DialogHeader className="border-b pb-3">
+                                        <DialogTitle className="text-center text-xl font-semibold text-[#050505]">
+                                            Create post
+                                        </DialogTitle>
                                     </DialogHeader>
 
                                     <div className="space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e4e6eb] text-sm font-semibold text-[#1c1e21]">
+                                                {displayName.charAt(0).toUpperCase()}
+                                            </div>
+                                            <p className="text-sm font-semibold text-[#050505]">
+                                                {displayName}
+                                            </p>
+                                        </div>
                                         <div>
-                                            <Label>Title</Label>
+                                            <Label className="text-[#65676b]">
+                                                Title
+                                            </Label>
                                             <Input
+                                                className="mt-1 border-[#ccd0d5] focus-visible:ring-[#1877f2]"
                                                 value={data.title}
                                                 onChange={(e) =>
                                                     setData(
@@ -116,11 +118,13 @@ const AllPost = ({ posts, user }: Props) => {
                                         </div>
 
                                         <div>
-                                            <Label>Post</Label>
+                                            <Label className="text-[#65676b]">
+                                                Post
+                                            </Label>
                                             <Textarea
-                                                className="resize-none"
+                                                className="mt-1 min-h-36 resize-none border-[#ccd0d5] text-base focus-visible:ring-[#1877f2]"
                                                 value={data.post}
-                                                placeholder="What's in your mind?"
+                                                placeholder={`What's on your mind, ${displayName}?`}
                                                 onChange={(e) =>
                                                     setData(
                                                         'post',
@@ -129,51 +133,91 @@ const AllPost = ({ posts, user }: Props) => {
                                                 }
                                             />
                                         </div>
+
+                                        <div>
+                                            <Label className="text-[#65676b]">
+                                                Photo
+                                            </Label>
+                                            <Input
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                className="mt-1 border-[#ccd0d5] focus-visible:ring-[#1877f2]"
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'images',
+                                                        Array.from(
+                                                            e.target.files ?? [],
+                                                        ),
+                                                    )
+                                                }
+                                            />
+                                            {data.images.length > 0 && (
+                                                <div className="mt-2 grid grid-cols-3 gap-2">
+                                                    {data.images.map(
+                                                        (image, idx) => (
+                                                            <img
+                                                                key={`${image.name}-${idx}`}
+                                                                src={URL.createObjectURL(
+                                                                    image,
+                                                                )}
+                                                                alt={image.name}
+                                                                className="h-20 w-full rounded-md border object-cover"
+                                                            />
+                                                        ),
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    <DialogFooter>
+                                    <DialogFooter className="border-t pt-4">
                                         <DialogClose asChild>
-                                            <Button variant="outline">
-                                                Close
+                                            <Button
+                                                variant="outline"
+                                                type="button"
+                                                className="rounded-md border-[#ccd0d5]"
+                                            >
+                                                Cancel
                                             </Button>
                                         </DialogClose>
-
-                                        <DialogClose asChild>
-                                            <Button>Done</Button>
-                                        </DialogClose>
+                                        <Button
+                                            type="submit"
+                                            className="bg-[#1877f2] hover:bg-[#166fe5]"
+                                            disabled={
+                                                processing ||
+                                                (data.post.trim() === '' &&
+                                                    data.images.length === 0)
+                                            }
+                                        >
+                                            {processing ? 'Posting...' : 'Post'}
+                                        </Button>
                                     </DialogFooter>
-                                </DialogContent>
-                            </form>
+                                </form>
+                            </DialogContent>
                         </Dialog>
                     </div>
-                    <div className="flex justify-center bg-amber-600">
-                        <div className="mt-6 flex w-4xl max-w-2xl flex-col gap-4 bg-cyan-800">
-                            {!posts || posts.data.length === 0 ? (
-                                <p className="col-span-full text-center text-gray-500">
-                                    No posts yet.
-                                </p>
-                            ) : (
-                                <InfiniteScroll data="posts">
-                                    {posts.data.map((p, index) => (
-                                        <div
-                                            key={`${p.id}-${index}`}
-                                            className="border-b p-2"
-                                        >
-                                            <PostCard
-                                                key={p.id}
-                                                post={p}
-                                                onDelete={handleDelete}
-                                            />
-                                        </div>
-                                    ))}
-                                </InfiniteScroll>
-                            )}
-                        </div>
-                    </div>
+
+                    {!posts || posts.data.length === 0 ? (
+                        <p className="rounded-xl border bg-white p-8 text-center text-gray-500 shadow-sm">
+                            No posts yet.
+                        </p>
+                    ) : (
+                        <InfiniteScroll data="posts">
+                            <div className="flex flex-col gap-4">
+                                {posts.data.map((p) => (
+                                    <PostCard
+                                        key={p.id}
+                                        post={p}
+                                        onDelete={handleDelete}
+                                    />
+                                ))}
+                            </div>
+                        </InfiniteScroll>
+                    )}
                 </div>
 
-                {/* RIGHT */}
-                <div className="fixed top-18 right-0 hidden h-screen w-1/4 lg:block">
+                <div className="sticky top-18 hidden h-[calc(100vh-5rem)] w-1/4 lg:block">
                     <FbSideBarRight />
                 </div>
             </div>

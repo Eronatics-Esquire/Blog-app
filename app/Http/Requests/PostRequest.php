@@ -23,7 +23,10 @@ class PostRequest extends FormRequest
     {
         return [
             'title'=> 'nullable|string|max:255',
-            'post'=> 'nullable|string|max:255'
+            'post'=> 'nullable|string|max:5000',
+            'image' => 'nullable|image|max:5120',
+            'images' => 'nullable|array|max:10',
+            'images.*' => 'image|max:5120',
         ];
     }
 }

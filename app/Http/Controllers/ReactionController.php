@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\BroadcastEvent;
+use App\Models\Comment;
 use App\Models\Post;
 use App\Models\Reaction;
 use Illuminate\Http\Request;
@@ -46,6 +47,38 @@ class ReactionController extends Controller
         broadcast(new BroadcastEvent(post: $post));
 
             return redirect()->back();
+    }
+
+    public function reactComment(Request $request, Comment $comment)
+    {
+        if (!Auth()->check()) {
+            return redirect()->back();
+        }
+
+        $reaction = $comment->reactions()
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if ($request->reaction === '' || $request->reaction === null) {
+            $reaction?->delete();
+        } else {
+            if ($reaction) {
+                $reaction->update([
+                    'reaction' => $request->reaction,
+                ]);
+            } else {
+                $comment->reactions()->create([
+                    'user_id' => Auth::id(),
+                    'reaction' => $request->reaction,
+                ]);
+            }
+        }
+
+        $post = $comment->post;
+        $post?->load(['comments.user', 'comments.reactions']);
+        broadcast(new BroadcastEvent(post: $post));
+
+        return redirect()->back();
     }
 }
 

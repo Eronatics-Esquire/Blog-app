@@ -20,6 +20,9 @@ Route::post('/comments/{post}', [CommentController  ::class, 'store'])->name('co
 Route::post('/posts/{post}/react', [ReactionController::class, 'react'])
     ->name('posts.react')
     ->middleware('auth');
+Route::post('/comments/{comment}/react', [ReactionController::class, 'reactComment'])
+    ->name('comments.react')
+    ->middleware('auth');
 
 
 
