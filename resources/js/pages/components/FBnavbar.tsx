@@ -8,6 +8,7 @@ import { Link } from '@inertiajs/react';
 import { User } from '@/types';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { Bell, MessageCircleIcon } from 'lucide-react';
+import NotificationBell from '../Notifications/Index';
 
 type Props = {
     user?: User | null;
@@ -44,7 +45,7 @@ export default function FBnavbar({ user }: Props) {
                     <MessageCircleIcon className="h-5 w-5" />
                 </button>
                 <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e4e6eb] text-[#1c1e21]">
-                    <Bell className="h-5 w-5" />
+                    <NotificationBell />
                 </button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

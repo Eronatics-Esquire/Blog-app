@@ -12,6 +12,7 @@ use Inertia\Inertia;
 
 class PostServices
 {
+    public function __construct(protected NotificationService $notificationService){}
     public function getAll(){
         if (!Auth()->check()){
             return redirect()->back();
@@ -77,6 +78,7 @@ class PostServices
                 'path' => $image->store('posts', 'public'),
             ]);
         }
+        $this->notificationService->createPostNotification($post);
 
         $post->load('user', 'reactions', 'images');
         $post->image_url = $post->image_path ? Storage::url($post->image_path) : null;
