@@ -15,6 +15,7 @@ use Inertia\Inertia;
 class PostController extends Controller
 
 {
+    
     public function __construct(protected PostServices $postServices){}
     public function index()
     {    

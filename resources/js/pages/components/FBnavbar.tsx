@@ -44,9 +44,9 @@ export default function FBnavbar({ user }: Props) {
                 <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e4e6eb] text-[#1c1e21]">
                     <MessageCircleIcon className="h-5 w-5" />
                 </button>
-                <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e4e6eb] text-[#1c1e21]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e4e6eb] text-[#1c1e21]">
                     <NotificationBell />
-                </button>
+                </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className="flex cursor-pointer items-center gap-2">

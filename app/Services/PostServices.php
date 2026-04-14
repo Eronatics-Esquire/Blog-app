@@ -78,7 +78,9 @@ class PostServices
                 'path' => $image->store('posts', 'public'),
             ]);
         }
+        logger($post);
         $this->notificationService->createPostNotification($post);
+        
 
         $post->load('user', 'reactions', 'images');
         $post->image_url = $post->image_path ? Storage::url($post->image_path) : null;

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Services;
 
 use App\Events\NewNotification;
@@ -10,12 +9,14 @@ use App\Models\Post;
 use App\Models\User;
 
 class NotificationService
-{      
+{
+    // =====================
+    // POST NOTIFICATION
+    // =====================
     public function createPostNotification(Post $post): void
     {
-        // Notify all followers or friends (simplified - notify everyone except creator)
         $users = User::where('id', '!=', $post->user_id)->get();
-        
+
         foreach ($users as $user) {
             $notification = Notification::create([
                 'user_id' => $user->id,
@@ -23,21 +24,23 @@ class NotificationService
                 'type' => 'new_post',
                 'notifiable_type' => Post::class,
                 'notifiable_id' => $post->id,
-                'data' => json_encode([
+                'data' => [
                     'message' => "{$post->user->name} created a new post",
                     'post_preview' => substr($post->content ?? $post->caption ?? '', 0, 100),
-                ])
+                ]
             ]);
-            
-            broadcast(new NewNotification($notification))->toOthers();
+
+            broadcast(new NewNotification($notification));
         }
     }
 
+    // =====================
+    // COMMENT NOTIFICATION
+    // =====================
     public function createCommentNotification(Comment $comment): void
     {
         $post = $comment->post;
-        
-        // Notify post owner if someone else commented
+
         if ($post->user_id !== $comment->user_id) {
             $notification = Notification::create([
                 'user_id' => $post->user_id,
@@ -51,68 +54,65 @@ class NotificationService
                     'post_id' => $post->id,
                 ]
             ]);
-            
-            broadcast(new NewNotification($notification))->toOthers();
+
+           broadcast(new NewNotification($notification));
         }
-        
-        // Notify parent comment owner if this is a reply
+
         if ($comment->parent_id) {
-            $parentComment = Comment::find($comment->parent_id);
-            if ($parentComment && $parentComment->user_id !== $comment->user_id) {
+            $parent = Comment::find($comment->parent_id);
+
+            if ($parent && $parent->user_id !== $comment->user_id) {
                 $notification = Notification::create([
-                    'user_id' => $parentComment->user_id,
+                    'user_id' => $parent->user_id,
                     'sender_id' => $comment->user_id,
                     'type' => 'comment_reply',
                     'notifiable_type' => Comment::class,
                     'notifiable_id' => $comment->id,
-                    'data' => json_encode([
+                    'data' => [
                         'message' => "{$comment->user->name} replied to your comment",
                         'comment_preview' => substr($comment->comment, 0, 100),
                         'post_id' => $post->id,
-                    ])
+                    ]
                 ]);
-                
-                broadcast(new NewNotification($notification))->toOthers();
+
+                broadcast(new NewNotification($notification));
             }
         }
     }
 
+    // =====================
+    // REACTION NOTIFICATION
+    // =====================
     public function createReactionNotification($reaction, string $type, $model): void
     {
         $ownerId = $model->user_id;
-        
-        // Don't notify if user reacts to their own content
-        if ($ownerId === $reaction['user_id']) {
-            return;
-        }
-        
+
+        if ($ownerId === $reaction['user_id']) return;
+
+        $sender = User::find($reaction['user_id']);
+
         $notification = Notification::create([
             'user_id' => $ownerId,
             'sender_id' => $reaction['user_id'],
             'type' => $type,
             'notifiable_type' => get_class($model),
             'notifiable_id' => $model->id,
-            'data' => json_encode([
-                'message' => $this->getReactionMessage($type, $reaction['user_id'], $model),
+            'data' => [
+                'message' => "{$sender->name} reacted",
                 'reaction_type' => $reaction['reaction'],
-            ])
+                'post_id' => $model instanceof Post ? $model->id : ($model->post_id ?? null),
+            ]
         ]);
-        
-        broadcast(new NewNotification($notification))->toOthers();
+
+        broadcast(new NewNotification($notification));
     }
 
-    private function getReactionMessage(string $type, int $senderId, $model): string
+    // =====================
+    // MARK AS READ
+    // =====================
+    public function markAsRead($id, $userId): void
     {
-        $sender = User::find($senderId);
-        if ($type === 'post_like') {
-            return "{$sender->name} reacted to your post";
-        }
-        return "{$sender->name} reacted to your comment";
-    }
-
-    public function markAsRead($notificationId, $userId): void
-    {
-        Notification::where('id', $notificationId)
+        Notification::where('id', $id)
             ->where('user_id', $userId)
             ->update(['read_at' => now()]);
     }
@@ -124,9 +124,12 @@ class NotificationService
             ->update(['read_at' => now()]);
     }
 
+    // =====================
+    // FETCH NOTIFICATIONS
+    // =====================
     public function getUserNotifications($userId, $limit = 20)
     {
-        return Notification::with(['sender'])
+        return Notification::with('sender')
             ->where('user_id', $userId)
             ->latest()
             ->paginate($limit);
