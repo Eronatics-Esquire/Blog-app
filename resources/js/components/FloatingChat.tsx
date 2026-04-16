@@ -66,17 +66,34 @@ const AvatarContent = ({
     user?: Conversation['users'][0] | null;
     size?: 'sm' | 'md' | 'lg';
 }) => {
-    if (user?.profile_photo) {
+    if (
+        user?.profile_photo &&
+        typeof user.profile_photo === 'string' &&
+        user.profile_photo.length > 0
+    ) {
         return (
             <img
                 src={`/storage/${user.profile_photo}`}
-                alt={user.name || ''}
+                alt={typeof user?.name === 'string' ? user.name : ''}
                 className="h-full w-full object-cover"
                 onError={(e) => {
                     e.currentTarget.style.display = 'none';
                 }}
             />
         );
+    }
+
+    let initial = '?';
+    if (
+        user?.name &&
+        typeof user.name === 'string' &&
+        user.name.length > 0 &&
+        user.name.length < 50
+    ) {
+        const firstChar = user.name.charAt(0);
+        if (/[a-zA-Z]/.test(firstChar)) {
+            initial = firstChar.toUpperCase();
+        }
     }
 
     return (
@@ -89,7 +106,7 @@ const AvatarContent = ({
                       : 'text-base'
             }`}
         >
-            {user?.name?.charAt(0).toUpperCase()}
+            {initial}
         </div>
     );
 };
@@ -145,7 +162,12 @@ const ConversationListItem = ({
             <div className="flex-1 overflow-hidden">
                 <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-900">
-                        {otherUser?.name}
+                        {typeof otherUser?.name === 'string' &&
+                        otherUser.name.length > 0 &&
+                        otherUser.name.length < 50 &&
+                        /^[a-zA-Z]/.test(otherUser.name)
+                            ? otherUser.name
+                            : 'Unknown'}
                     </span>
                     {lastMsg?.created_at && (
                         <span className="text-xs text-gray-400">
@@ -413,7 +435,15 @@ export default function FloatingChat() {
                 Accept: 'application/json',
             },
             credentials: 'include',
-        }).catch(console.error);
+        })
+            .then(() => {
+                window.dispatchEvent(
+                    new CustomEvent('chat-messages-seen', {
+                        detail: { conversationId: activeChat.id },
+                    }),
+                );
+            })
+            .catch(console.error);
     };
 
     const openChat = (convo: Conversation) => {
@@ -511,12 +541,21 @@ export default function FloatingChat() {
                                                 size="sm"
                                             />
                                         </div>
-                                        {otherUser.is_online && (
-                                            <span className="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-[#0084ff] bg-green-500" />
-                                        )}
+                                        <span
+                                            className={`absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-[#0084ff] ${
+                                                otherUser.is_online === true
+                                                    ? 'bg-green-500'
+                                                    : 'bg-gray-400'
+                                            }`}
+                                        />
                                     </div>
                                     <span className="font-semibold text-white">
-                                        {otherUser.name}
+                                        {typeof otherUser.name === 'string' &&
+                                        otherUser.name.length > 0 &&
+                                        otherUser.name.length < 50 &&
+                                        /^[a-zA-Z]/.test(otherUser.name)
+                                            ? otherUser.name
+                                            : 'User'}
                                     </span>
                                 </div>
                             )}
@@ -524,7 +563,10 @@ export default function FloatingChat() {
                                 <span className="font-semibold text-white">
                                     {showList
                                         ? 'Chats'
-                                        : otherUser?.name || 'Chat'}
+                                        : otherUser?.name &&
+                                            typeof otherUser.name === 'string'
+                                          ? otherUser.name
+                                          : 'Chat'}
                                 </span>
                             )}
                         </div>

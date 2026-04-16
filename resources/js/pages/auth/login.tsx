@@ -63,7 +63,9 @@ export default function Login({
                                                 placeholder="Email address or phone number"
                                                 className="h-12 border-[#dddfe2] text-base focus-visible:ring-[#1877f2]"
                                             />
-                                            <InputError message={errors.email} />
+                                            <InputError
+                                                message={errors.email}
+                                            />
                                         </div>
 
                                         <div className="grid gap-2">
@@ -151,7 +153,7 @@ export default function Login({
                             for a celebrity, brand or business.
                         </p>
                     </div>
-                                </div>
+                </div>
             </div>
         </div>
     );

@@ -66,4 +66,9 @@ class ChatController extends Controller
     {
         return $this->chatServices->getContactsWithPresence();
     }
+
+    public function apiDeleteConversation($conversationId)
+    {
+        return $this->chatServices->deleteConversation($conversationId);
+    }
 }

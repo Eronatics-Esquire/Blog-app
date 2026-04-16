@@ -21,13 +21,42 @@ type Conversation = {
     messages: any[];
 };
 
+type SearchUser = {
+    id: number;
+    name: string;
+    first_name?: string;
+    last_name?: string;
+    profile_photo: string | null;
+    is_online: boolean;
+};
+
+const formatChatTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Now';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    if (diffDays < 7) return `${diffDays}d`;
+    return date.toLocaleDateString();
+};
+
 export default function FBnavbar({ user }: Props) {
     const { props } = usePage() as any;
     const authUser = props.auth?.user;
 
     const [chatOpen, setChatOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+    const [searching, setSearching] = useState(false);
     const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
     const chatRef = useRef<HTMLDivElement>(null);
+    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -38,23 +67,161 @@ export default function FBnavbar({ user }: Props) {
                 setChatOpen(false);
             }
         };
+
         if (chatOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
-        return () =>
+        return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, [chatOpen]);
 
     useEffect(() => {
-        if (chatOpen) {
+        const handleMessagesSeen = () => {
             fetch('/api/conversations', {
                 headers: { Accept: 'application/json' },
             })
                 .then((res) => res.json())
-                .then((data) => setConversations(data.conversations || []))
+                .then((data) => {
+                    const convos = (data.conversations || []).filter(
+                        (convo: Conversation) =>
+                            convo.messages && convo.messages.length > 0,
+                    );
+                    setConversations(convos);
+                    const unread = convos.reduce(
+                        (count: number, convo: Conversation) => {
+                            return (
+                                count +
+                                (convo.messages || []).filter(
+                                    (msg: any) =>
+                                        msg.is_unread &&
+                                        msg.user_id !== authUser?.id,
+                                ).length
+                            );
+                        },
+                        0,
+                    );
+                    setUnreadCount(unread);
+                })
                 .catch(console.error);
+        };
+
+        window.addEventListener('chat-messages-seen', handleMessagesSeen);
+        return () => {
+            window.removeEventListener(
+                'chat-messages-seen',
+                handleMessagesSeen,
+            );
+        };
+    }, [authUser?.id]);
+
+    useEffect(() => {
+        const fetchConversations = () => {
+            fetch('/api/conversations', {
+                headers: { Accept: 'application/json' },
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    const convos = (data.conversations || []).filter(
+                        (convo: Conversation) =>
+                            convo.messages && convo.messages.length > 0,
+                    );
+                    setConversations(convos);
+                    const unread = convos.reduce(
+                        (count: number, convo: Conversation) => {
+                            return (
+                                count +
+                                (convo.messages || []).filter(
+                                    (msg: any) =>
+                                        msg.is_unread &&
+                                        msg.user_id !== authUser?.id,
+                                ).length
+                            );
+                        },
+                        0,
+                    );
+                    setUnreadCount(unread);
+                })
+                .catch(console.error);
+        };
+
+        if (chatOpen) {
+            fetchConversations();
         }
-    }, [chatOpen]);
+    }, [chatOpen, authUser?.id]);
+
+    useEffect(() => {
+        const fetchConversations = () => {
+            fetch('/api/conversations', {
+                headers: { Accept: 'application/json' },
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    const convos = (data.conversations || []).filter(
+                        (convo: Conversation) =>
+                            convo.messages && convo.messages.length > 0,
+                    );
+                    setConversations(convos);
+                    const unread = convos.reduce(
+                        (count: number, convo: Conversation) => {
+                            return (
+                                count +
+                                (convo.messages || []).filter(
+                                    (msg: any) =>
+                                        msg.is_unread &&
+                                        msg.user_id !== authUser?.id,
+                                ).length
+                            );
+                        },
+                        0,
+                    );
+                    setUnreadCount(unread);
+                })
+                .catch(console.error);
+        };
+
+        fetchConversations();
+        const interval = setInterval(fetchConversations, 5000);
+        return () => clearInterval(interval);
+    }, [authUser?.id]);
+
+    useEffect(() => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        if (searchQuery.trim().length < 1) {
+            setSearchResults([]);
+            setSearching(false);
+            return;
+        }
+
+        setSearching(true);
+        searchTimeoutRef.current = setTimeout(async () => {
+            try {
+                const response = await fetch(
+                    `/api/users/search?q=${encodeURIComponent(searchQuery)}`,
+                    {
+                        headers: { Accept: 'application/json' },
+                        credentials: 'include',
+                    },
+                );
+                const data = await response.json();
+                setSearchResults(data.users || []);
+            } catch (error) {
+                console.error('Search failed:', error);
+                setSearchResults([]);
+            } finally {
+                setSearching(false);
+            }
+        }, 300);
+
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [searchQuery]);
 
     const openChatInFloating = (convo: Conversation) => {
         setChatOpen(false);
@@ -69,22 +236,150 @@ export default function FBnavbar({ user }: Props) {
         return convo.users?.find((u: any) => u.id !== authUser?.id);
     };
 
+    const handleSearchResultClick = (userId: number) => {
+        setSearchQuery('');
+        setSearchResults([]);
+        window.location.href = `/profile/${userId}`;
+    };
+
     return (
-        <div className="sticky top-0 z-50 flex w-full items-center justify-between border-b bg-white px-4 py-3 shadow-sm">
-            <Link href="/all-post">
-                <svg className="h-10 w-10" viewBox="0 0 24 24" fill="#1877F2">
-                    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
-                </svg>
-            </Link>
-
-            <Link
-                href="/all-post"
-                className="text-2xl font-bold text-[#1877F2]"
-            >
-                Facebook
-            </Link>
-
+        <div className="sticky top-0 z-50 flex h-14 w-full items-center justify-between border-b bg-white px-4 shadow-sm">
+            {/* Left section - Logo + Search */}
             <div className="flex items-center gap-3">
+                <Link href="/all-post">
+                    <svg
+                        className="h-10 w-10"
+                        viewBox="0 0 24 24"
+                        fill="#1877F2"
+                    >
+                        <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
+                    </svg>
+                </Link>
+
+                {/* Search Bar */}
+                <div className="relative">
+                    <div className="flex items-center rounded-full bg-gray-100 px-3 py-2">
+                        <svg
+                            className="h-4 w-4 text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Search Facebook"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="ml-2 bg-transparent text-sm placeholder-gray-500 focus:outline-none"
+                        />
+                    </div>
+
+                    {/* Search Results Dropdown */}
+                    {searchQuery.length >= 1 && (
+                        <div className="absolute top-full left-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-[#dcdcdc] bg-white shadow-lg">
+                            <div className="max-h-80 overflow-y-auto">
+                                {searching && (
+                                    <div className="p-4 text-center text-sm text-gray-500">
+                                        Searching...
+                                    </div>
+                                )}
+                                {!searching && searchResults.length === 0 && (
+                                    <div className="p-4 text-center text-sm text-gray-500">
+                                        No results found for "{searchQuery}"
+                                    </div>
+                                )}
+                                {!searching && searchResults.length > 0 && (
+                                    <div className="py-2">
+                                        <p className="px-4 py-1 text-xs font-medium text-gray-500 uppercase">
+                                            People
+                                        </p>
+                                        {searchResults.map((result) => {
+                                            const fullName =
+                                                [
+                                                    result.first_name,
+                                                    result.last_name,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' ') || result.name;
+                                            return (
+                                                <div
+                                                    key={result.id}
+                                                    onClick={() =>
+                                                        handleSearchResultClick(
+                                                            result.id,
+                                                        )
+                                                    }
+                                                    className="flex w-full cursor-pointer items-center gap-3 px-4 py-2 transition-colors hover:bg-gray-100"
+                                                >
+                                                    <div className="relative h-10 w-10 flex-shrink-0">
+                                                        {result.profile_photo ? (
+                                                            <img
+                                                                src={`/storage/${result.profile_photo}`}
+                                                                alt={fullName}
+                                                                className="h-10 w-10 rounded-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e4e6eb] font-semibold text-[#050505]">
+                                                                {(
+                                                                    fullName.charAt(
+                                                                        0,
+                                                                    ) || '?'
+                                                                ).toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                        <span
+                                                            className={`absolute -right-0.5 -bottom-0.5 rounded-full border-2 border-white ${
+                                                                result.is_online
+                                                                    ? 'bg-green-500'
+                                                                    : 'bg-gray-400'
+                                                            } h-3 w-3`}
+                                                            style={{
+                                                                zIndex: 10,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1 overflow-hidden">
+                                                        <p className="truncate text-sm font-medium text-[#050505]">
+                                                            {fullName}
+                                                        </p>
+                                                        <p
+                                                            className={`text-xs ${result.is_online ? 'text-green-600' : 'text-gray-500'}`}
+                                                        >
+                                                            {result.is_online
+                                                                ? 'Active now'
+                                                                : 'Offline'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Center - Facebook text */}
+            <div className="hidden md:block">
+                <Link
+                    href="/all-post"
+                    className="text-2xl font-bold text-[#1877F2]"
+                >
+                    Facebook
+                </Link>
+            </div>
+
+            {/* Right section - Icons */}
+            <div className="flex items-center gap-1">
                 {/* Chat Dropdown */}
                 <div className="relative" ref={chatRef}>
                     <button
@@ -93,54 +388,219 @@ export default function FBnavbar({ user }: Props) {
                         className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300"
                     >
                         <MessageCircleIcon className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#fa3e3b] px-1 text-xs font-bold text-white">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
                     </button>
 
                     {chatOpen && (
-                        <div className="absolute top-full right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-[#dcdcdc] bg-white shadow-lg">
-                            <div className="flex items-center justify-between border-b border-[#dcdcdc] bg-[#f5f6f7] p-3">
-                                <h3 className="text-[17px] font-semibold text-[#050505]">
+                        <div className="absolute top-full right-0 z-50 mt-2 w-96 overflow-hidden rounded-2xl border border-[#dcdcdc] bg-white shadow-[0_2px_16px_rgba(0,0,0,0.2)]">
+                            {/* Header */}
+                            <div className="flex items-center justify-between border-b border-[#dcdcdc] p-4">
+                                <h3 className="text-xl font-bold text-[#050505]">
                                     Chats
                                 </h3>
+                                <div className="flex gap-2">
+                                    <button className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100">
+                                        <svg
+                                            className="h-5 w-5 text-[#65676b]"
+                                            fill="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className="max-h-[400px] overflow-y-auto">
+                            {/* Search */}
+                            <div className="border-b border-[#dcdcdc] p-3">
+                                <div className="flex items-center rounded-full bg-[#f0f2f5] px-4 py-2">
+                                    <svg
+                                        className="h-4 w-4 text-[#65676b]"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                        />
+                                    </svg>
+                                    <input
+                                        type="text"
+                                        placeholder="Search conversations"
+                                        className="ml-2 flex-1 bg-transparent text-sm text-[#050505] placeholder-[#65676b] outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Chat List */}
+                            <div className="max-h-96 overflow-y-auto">
                                 {conversations.length === 0 ? (
-                                    <div className="p-4 text-center text-gray-500">
-                                        No conversations yet
+                                    <div className="flex flex-col items-center justify-center py-12">
+                                        <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#f0f2f5]">
+                                            <MessageCircleIcon className="h-8 w-8 text-[#65676b]" />
+                                        </div>
+                                        <p className="text-base font-medium text-[#65676b]">
+                                            No conversations yet
+                                        </p>
+                                        <p className="mt-1 text-sm text-[#65676b]">
+                                            Start chatting with friends
+                                        </p>
                                     </div>
                                 ) : (
                                     conversations.map((convo) => {
                                         const otherUser = getOtherUser(convo);
-                                        const lastMessage =
-                                            convo.messages?.[
-                                                convo.messages.length - 1
-                                            ];
+                                        const lastMessage = convo.messages?.[0];
+                                        const unreadMessages = (
+                                            convo.messages || []
+                                        ).filter(
+                                            (msg: any) =>
+                                                msg.is_unread &&
+                                                msg.user_id !== authUser?.id,
+                                        ).length;
+                                        const handleDelete = (
+                                            e: React.MouseEvent,
+                                        ) => {
+                                            e.stopPropagation();
+                                            if (
+                                                confirm(
+                                                    'Delete this conversation?',
+                                                )
+                                            ) {
+                                                fetch(
+                                                    `/api/conversations/${convo.id}`,
+                                                    {
+                                                        method: 'DELETE',
+                                                        headers: {
+                                                            'X-CSRF-TOKEN':
+                                                                document
+                                                                    .querySelector(
+                                                                        'meta[name="csrf-token"]',
+                                                                    )
+                                                                    ?.getAttribute(
+                                                                        'content',
+                                                                    ) || '',
+                                                            'Content-Type':
+                                                                'application/json',
+                                                        },
+                                                        credentials: 'include',
+                                                    },
+                                                )
+                                                    .then((res) => res.json())
+                                                    .then(() => {
+                                                        setConversations(
+                                                            (prev) =>
+                                                                prev.filter(
+                                                                    (c) =>
+                                                                        c.id !==
+                                                                        convo.id,
+                                                                ),
+                                                        );
+                                                    })
+                                                    .catch(console.error);
+                                            }
+                                        };
                                         return (
                                             <div
                                                 key={convo.id}
                                                 onClick={() =>
                                                     openChatInFloating(convo)
                                                 }
-                                                className="flex w-full cursor-pointer items-center gap-3 border-b border-[#dcdcdc] p-3 transition-colors hover:bg-[#f2f2f2]"
+                                                className="group flex w-full cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-[#f2f2f2]"
                                             >
-                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e4e6eb] font-semibold text-[#050505]">
-                                                    {otherUser?.name
-                                                        ?.charAt(0)
-                                                        .toUpperCase()}
+                                                {/* Avatar */}
+                                                <div className="relative">
+                                                    {otherUser?.profile_photo ? (
+                                                        <img
+                                                            src={`/storage/${otherUser.profile_photo}`}
+                                                            alt={
+                                                                otherUser?.name ||
+                                                                ''
+                                                            }
+                                                            className="h-14 w-14 rounded-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e4e6eb] text-lg font-semibold text-[#050505]">
+                                                            {(
+                                                                otherUser?.name?.charAt(
+                                                                    0,
+                                                                ) || '?'
+                                                            ).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <span
+                                                        className={`absolute right-0 bottom-0 h-4 w-4 rounded-full border-2 border-white ${otherUser?.is_online === true ? 'bg-[#31a24c]' : 'bg-[#bcc0c4]'}`}
+                                                    />
                                                 </div>
+
+                                                {/* Content */}
                                                 <div className="flex-1 overflow-hidden">
-                                                    <div className="text-sm font-semibold text-[#050505]">
-                                                        {otherUser?.name}
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="text-[15px] font-semibold text-[#050505]">
+                                                            {otherUser?.name ||
+                                                                'Unknown'}
+                                                        </h4>
+                                                        {lastMessage?.created_at && (
+                                                            <span className="text-xs text-[#65676b]">
+                                                                {formatChatTime(
+                                                                    lastMessage.created_at,
+                                                                )}
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    <div className="truncate text-xs text-[#65676b]">
-                                                        {lastMessage?.message ||
-                                                            'Start a conversation'}
+                                                    <div className="flex items-center justify-between">
+                                                        <p
+                                                            className={`truncate text-sm ${unreadMessages > 0 ? 'font-medium text-[#050505]' : 'text-[#65676b]'}`}
+                                                        >
+                                                            {lastMessage?.message ||
+                                                                'Start a conversation'}
+                                                        </p>
+                                                        {unreadMessages > 0 && (
+                                                            <span className="ml-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#1877f2] px-1.5 text-xs font-medium text-white">
+                                                                {unreadMessages}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
+
+                                                {/* Three dots menu */}
+                                                <button
+                                                    onClick={handleDelete}
+                                                    className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-200 hover:text-gray-600"
+                                                    title="Delete conversation"
+                                                >
+                                                    <svg
+                                                        className="h-5 w-5"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         );
                                     })
                                 )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="border-t border-[#dcdcdc] p-3">
+                                <button className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-[#1877f2] hover:bg-[#f2f2f2]">
+                                    <svg
+                                        className="h-5 w-5"
+                                        fill="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+                                    </svg>
+                                    New message
+                                </button>
                             </div>
                         </div>
                     )}
@@ -150,8 +610,12 @@ export default function FBnavbar({ user }: Props) {
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-2">
-                            <UserInfo user={user} showEmail={false} />
+                        <button className="ml-1 flex items-center gap-2">
+                            <UserInfo
+                                user={user}
+                                showEmail={false}
+                                firstNameOnly
+                            />
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">

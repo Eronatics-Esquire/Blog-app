@@ -12,8 +12,8 @@ export default function Register() {
         <div className="min-h-screen bg-[#f0f2f5]">
             <Head title="Register" />
 
-            <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-12">
-                <div className="w-full max-w-lg rounded-xl bg-white shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
+            <div className="mx-auto flex min-h-screen w-full max-w-lg items-center justify-center px-4 py-12">
+                <div className="w-full rounded-xl bg-white shadow-[0_8px_24px_rgba(0,0,0,0.15)]">
                     <div className="border-b border-[#dadde1] px-5 py-4">
                         <h1 className="text-[32px] leading-none font-bold text-[#1c1e21]">
                             Sign Up
@@ -32,36 +32,49 @@ export default function Register() {
                         {({ processing, errors }) => (
                             <>
                                 <div className="grid gap-3">
-                                    <div>
-                                        <Label htmlFor="name" className="sr-only">
-                                            Name
-                                        </Label>
-                                        <Input
-                                            id="name"
-                                            type="text"
-                                            required
-                                            autoFocus
-                                            tabIndex={1}
-                                            autoComplete="name"
-                                            name="name"
-                                            placeholder="Full name"
-                                            className="h-11 border-[#ccd0d5] bg-[#f5f6f7] text-base focus-visible:ring-[#1877f2]"
-                                        />
-                                        <InputError
-                                            message={errors.name}
-                                            className="mt-1"
-                                        />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <Input
+                                                id="first_name"
+                                                type="text"
+                                                required
+                                                autoFocus
+                                                tabIndex={1}
+                                                autoComplete="given-name"
+                                                name="first_name"
+                                                placeholder="First name"
+                                                className="h-11 border-[#ccd0d5] bg-[#f5f6f7] text-base focus-visible:ring-[#1877f2]"
+                                            />
+                                            <InputError
+                                                message={errors.first_name}
+                                                className="mt-1"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Input
+                                                id="last_name"
+                                                type="text"
+                                                required
+                                                tabIndex={2}
+                                                autoComplete="family-name"
+                                                name="last_name"
+                                                placeholder="Last name"
+                                                className="h-11 border-[#ccd0d5] bg-[#f5f6f7] text-base focus-visible:ring-[#1877f2]"
+                                            />
+                                            <InputError
+                                                message={errors.last_name}
+                                                className="mt-1"
+                                            />
+                                        </div>
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="email" className="sr-only">
-                                            Email address
-                                        </Label>
                                         <Input
                                             id="email"
                                             type="email"
                                             required
-                                            tabIndex={2}
+                                            tabIndex={3}
                                             autoComplete="email"
                                             name="email"
                                             placeholder="Mobile number or email"
@@ -74,20 +87,14 @@ export default function Register() {
                                     </div>
 
                                     <div>
-                                        <Label
-                                            htmlFor="password"
-                                            className="sr-only"
-                                        >
-                                            Password
-                                        </Label>
                                         <Input
                                             id="password"
                                             type="password"
                                             required
-                                            tabIndex={3}
+                                            tabIndex={4}
                                             autoComplete="new-password"
                                             name="password"
-                                            placeholder="New password"
+                                            placeholder="Enter new password"
                                             className="h-11 border-[#ccd0d5] bg-[#f5f6f7] text-base focus-visible:ring-[#1877f2]"
                                         />
                                         <InputError
@@ -97,24 +104,20 @@ export default function Register() {
                                     </div>
 
                                     <div>
-                                        <Label
-                                            htmlFor="password_confirmation"
-                                            className="sr-only"
-                                        >
-                                            Confirm password
-                                        </Label>
                                         <Input
                                             id="password_confirmation"
                                             type="password"
                                             required
-                                            tabIndex={4}
+                                            tabIndex={5}
                                             autoComplete="new-password"
                                             name="password_confirmation"
                                             placeholder="Confirm password"
                                             className="h-11 border-[#ccd0d5] bg-[#f5f6f7] text-base focus-visible:ring-[#1877f2]"
                                         />
                                         <InputError
-                                            message={errors.password_confirmation}
+                                            message={
+                                                errors.password_confirmation
+                                            }
                                             className="mt-1"
                                         />
                                     </div>

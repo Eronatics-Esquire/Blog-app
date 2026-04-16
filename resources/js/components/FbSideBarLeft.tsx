@@ -34,14 +34,34 @@ const SHORTCUT_ITEMS = [
 ];
 
 const FbSideBarLeft = () => {
-    const { auth } = usePage().props as { auth?: { user?: { name: string } } };
-    const userName = auth?.user?.name ?? 'User';
+    const { auth } = usePage().props as {
+        auth?: {
+            user?: {
+                name: string;
+                profile_photo?: string;
+                profile_photo_url?: string;
+            };
+        };
+    };
+    const user = auth?.user;
+    const userName = user?.name ?? 'User';
     const userInitial = userName.charAt(0).toUpperCase();
+    const profilePhoto = user?.profile_photo_url || user?.profile_photo;
 
     const navItems: NavItem[] = [
         {
             label: userName,
-            icon: (
+            icon: profilePhoto ? (
+                <img
+                    src={
+                        profilePhoto.startsWith('/storage/')
+                            ? profilePhoto
+                            : `/storage/${profilePhoto}`
+                    }
+                    alt={userName}
+                    className="h-9 w-9 rounded-full object-cover"
+                />
+            ) : (
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1877f2] text-sm font-semibold text-white">
                     {userInitial}
                 </div>

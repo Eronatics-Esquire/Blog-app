@@ -80,15 +80,19 @@ export default function NotificationBell() {
     useEffect(() => {
         if (!auth?.user) return;
 
-        fetch('/api/notifications/count', {
-            headers: { Accept: 'application/json' },
-            credentials: 'include',
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                setUnreadCount(data.unreadCount || 0);
+        const fetchCount = () => {
+            fetch('/api/notifications/count', {
+                headers: { Accept: 'application/json' },
+                credentials: 'include',
             })
-            .catch(console.error);
+                .then((res) => res.json())
+                .then((data) => {
+                    setUnreadCount(data.unreadCount || 0);
+                })
+                .catch(console.error);
+        };
+
+        fetchCount();
     }, [auth?.user]);
 
     useEffect(() => {
@@ -133,6 +137,15 @@ export default function NotificationBell() {
 
     const toggleDropdown = () => {
         if (!isOpen) {
+            fetch('/api/notifications/count', {
+                headers: { Accept: 'application/json' },
+                credentials: 'include',
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    setUnreadCount(data.unreadCount || 0);
+                })
+                .catch(console.error);
             loadNotifications();
         }
         setIsOpen(!isOpen);

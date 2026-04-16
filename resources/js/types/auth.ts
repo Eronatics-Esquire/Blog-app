@@ -1,6 +1,8 @@
 export type User = {
     id: number;
     name: string;
+    first_name?: string;
+    last_name?: string;
     email: string;
     avatar?: string;
     email_verified_at: string | null;
@@ -21,6 +23,8 @@ export type Auth = {
 export type Contact = {
     id: number;
     name: string;
+    first_name?: string;
+    last_name?: string;
     profile_photo: string | null;
     is_online: boolean;
     last_seen_at: string | null;

@@ -14,6 +14,8 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
         'profile_photo',
@@ -33,6 +35,7 @@ class User extends Authenticatable
         'profile_photo_url',
         'cover_photo_url',
         'avatar',
+        'full_name',
     ];
 
     protected function casts(): array
@@ -81,6 +84,14 @@ class User extends Authenticatable
     public function getAvatarAttribute(): ?string
     {
         return $this->profile_photo_url;
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        $first = $this->first_name ?? '';
+        $last = $this->last_name ?? '';
+
+        return trim("{$first} {$last}") ?: $this->name ?? '';
     }
 
     public function posts()

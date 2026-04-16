@@ -124,7 +124,7 @@ class ChatServices
 
         $conversations = Auth::user()
             ->conversations()
-            ->with(['users' => fn ($q) => $q->select('users.id', 'users.name', 'users.profile_photo', 'users.is_online', 'users.last_seen_at'), 'messages' => fn ($q) => $q->latest()->limit(1)])
+            ->with(['users' => fn ($q) => $q->select('users.id', 'users.name', 'users.first_name', 'users.last_name', 'users.profile_photo', 'users.is_online', 'users.last_seen_at'), 'messages' => fn ($q) => $q->orderBy('created_at', 'desc')->limit(20)])
             ->get();
 
         return response()->json(['conversations' => $conversations]);
@@ -183,8 +183,10 @@ class ChatServices
             return response()->json(['error' => 'Message not found'], 404);
         }
 
-        $message->seen_at = now();
-        $message->save();
+        Message::where('conversation_id', $message->conversation_id)
+            ->whereNull('seen_at')
+            ->where('user_id', '!=', Auth::id())
+            ->update(['seen_at' => now()]);
 
         event(new MessageSeenEvent(
             $message->conversation_id,
@@ -223,8 +225,29 @@ class ChatServices
         $contacts = User::where('id', '!=', Auth::id())
             ->orderByDesc('is_online')
             ->orderByDesc('last_seen_at')
-            ->get(['id', 'name', 'profile_photo', 'is_online', 'last_seen_at']);
+            ->get(['id', 'name', 'first_name', 'last_name', 'profile_photo', 'is_online', 'last_seen_at']);
 
         return response()->json(['contacts' => $contacts]);
+    }
+
+    public function deleteConversation($conversationId)
+    {
+        if (! Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $conversation = Auth::user()
+            ->conversations()
+            ->find($conversationId);
+
+        if (! $conversation) {
+            return response()->json(['error' => 'Conversation not found'], 404);
+        }
+
+        $conversation->messages()->delete();
+        $conversation->users()->detach();
+        $conversation->delete();
+
+        return response()->json(['success' => true]);
     }
 }

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useEchoPublic } from '@laravel/echo-react';
 import type { Contact } from '@/types/auth';
 
 const FbSideBarRight = () => {
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const fetchContacts = async () => {
@@ -23,9 +25,37 @@ const FbSideBarRight = () => {
         };
 
         fetchContacts();
-        const interval = setInterval(fetchContacts, 30000);
+        const interval = setInterval(fetchContacts, 5000);
         return () => clearInterval(interval);
     }, []);
+
+    useEchoPublic(
+        'presence',
+        '.PresenceEvent',
+        (data: {
+            user_id: number;
+            is_online: boolean;
+            last_seen_at?: string | null;
+        }) => {
+            setContacts((prev) =>
+                prev.map((contact) =>
+                    contact.id === data.user_id
+                        ? {
+                              ...contact,
+                              is_online: data.is_online,
+                              last_seen_at: data.last_seen_at ?? null,
+                          }
+                        : contact,
+                ),
+            );
+        },
+    );
+
+    const filteredContacts = searchQuery.trim()
+        ? contacts.filter((c) =>
+              c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          )
+        : contacts;
 
     const handleContactClick = async (contact: Contact) => {
         try {
@@ -94,15 +124,21 @@ const FbSideBarRight = () => {
                         </div>
                     ))}
                 </div>
-            ) : contacts.length === 0 ? (
+            ) : filteredContacts.length === 0 ? (
                 <div className="px-2">
-                    <p className="text-sm text-gray-500">No contacts found</p>
+                    <p className="text-sm text-gray-500">
+                        {searchQuery ? 'No contacts found' : 'No contacts yet'}
+                    </p>
                 </div>
             ) : (
-                contacts.map((contact) => {
+                filteredContacts.map((contact) => {
+                    const fullName =
+                        [contact.first_name, contact.last_name]
+                            .filter(Boolean)
+                            .join(' ') || contact.name;
                     const imageUrl = contact.profile_photo
-                        ? `/storage/${contact.profile_photo}?v=${Date.now()}`
-                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(contact.name)}&background=random`;
+                        ? `/storage/${contact.profile_photo}`
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`;
 
                     return (
                         <div
@@ -113,10 +149,10 @@ const FbSideBarRight = () => {
                             <div className="relative h-8 w-8">
                                 <img
                                     src={imageUrl}
-                                    alt={contact.name}
+                                    alt={fullName}
                                     className="h-8 w-8 rounded-full object-cover"
                                     onError={(e) => {
-                                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(contact.name)}&background=random`;
+                                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`;
                                     }}
                                 />
                                 <span
@@ -132,7 +168,7 @@ const FbSideBarRight = () => {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[15px] font-medium text-gray-900">
-                                    {contact.name}
+                                    {fullName}
                                 </span>
                                 <span
                                     className={cn(
