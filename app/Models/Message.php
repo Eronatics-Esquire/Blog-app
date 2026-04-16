@@ -9,14 +9,21 @@ class Message extends Model
     protected $fillable = [
         'conversation_id',
         'user_id',
-        'message'
+        'message',
+        'seen_at',
     ];
 
-    public function user() {
+    protected $casts = [
+        'seen_at' => 'datetime',
+    ];
+
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function conversation () {
+    public function conversation()
+    {
         return $this->belongsTo(Conversation::class);
     }
 }

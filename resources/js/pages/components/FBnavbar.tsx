@@ -78,7 +78,7 @@ export default function FBnavbar({ user }: Props) {
             </Link>
 
             <Link
-                href="/all-post"
+                href="/all-postuser "
                 className="text-2xl font-bold text-[#1877F2]"
             >
                 Facebook

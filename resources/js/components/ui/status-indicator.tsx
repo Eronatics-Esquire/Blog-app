@@ -1,24 +1,24 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-interface StatusIndicatorProps extends React.HTMLAttributes<HTMLSpanElement> {
+interface StatusIndicatorProps {
   isOnline?: boolean
   lastSeenAt?: string | null
   size?: "sm" | "md" | "lg"
+  className?: string
 }
 
 function StatusIndicator({
   isOnline = false,
   size = "md",
   className,
-  ...props
 }: StatusIndicatorProps) {
   const sizeMap = {
     sm: "w-2 h-2",
     md: "w-3 h-3",
     lg: "w-4 h-4",
   }
-  
+
   return (
     <span
       className={cn(
@@ -28,7 +28,6 @@ function StatusIndicator({
         className
       )}
       style={{ position: 'absolute', bottom: 0, right: 0, zIndex: 10 }}
-      {...props}
     />
   )
 }

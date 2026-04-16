@@ -44,6 +44,7 @@ export default function NotificationBell() {
 
         fetch('/api/notifications/count', {
             headers: { Accept: 'application/json' },
+            credentials: 'include',
         })
             .then((res) => res.json())
             .then((data) => {
@@ -83,6 +84,7 @@ export default function NotificationBell() {
     const loadNotifications = () => {
         fetch('/api/notifications/list', {
             headers: { Accept: 'application/json' },
+            credentials: 'include',
         })
             .then((res) => res.json())
             .then((data) => {
@@ -109,6 +111,7 @@ export default function NotificationBell() {
                         ?.getAttribute('content') || '',
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
         });
 
         setUnreadCount((prev) => Math.max(0, prev - 1));
@@ -160,6 +163,7 @@ export default function NotificationBell() {
                         ?.getAttribute('content') || '',
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
         });
 
         setUnreadCount(0);

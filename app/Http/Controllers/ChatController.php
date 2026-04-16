@@ -47,6 +47,21 @@ class ChatController extends Controller
         return $this->chatServices->sendMessageForApi($request);
     }
 
+    public function apiFindOrCreate($userId)
+    {
+        return $this->chatServices->findOrCreateChatForApi($userId);
+    }
+
+    public function apiMarkAsSeen(Request $request, $messageId)
+    {
+        return $this->chatServices->markMessageAsSeen($messageId);
+    }
+
+    public function apiTyping(Request $request)
+    {
+        return $this->chatServices->broadcastTyping($request);
+    }
+
     public function getContactsWithPresence()
     {
         return $this->chatServices->getContactsWithPresence();

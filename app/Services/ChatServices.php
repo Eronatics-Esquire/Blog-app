@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Events\MessageSeenEvent;
 use App\Events\NewMessageEvent;
+use App\Events\TypingEvent;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -77,6 +79,28 @@ class ChatServices
         return redirect("/messages/{$conversation->id}");
     }
 
+    public function findOrCreateChatForApi($userId)
+    {
+        $authUser = Auth::user();
+
+        $conversation = $authUser->conversations()
+            ->whereHas('users', fn ($q) => $q
+                ->where('users.id', $userId))
+            ->with(['users' => fn ($q) => $q->select('users.id', 'users.name', 'users.profile_photo', 'users.is_online', 'users.last_seen_at'), 'messages' => fn ($q) => $q->latest()->limit(1)])
+            ->first();
+
+        if (! $conversation) {
+            $conversation = Conversation::create();
+            $conversation->users()->attach([$authUser->id, $userId]);
+            $conversation = $authUser->conversations()
+                ->where('conversations.id', $conversation->id)
+                ->with(['users' => fn ($q) => $q->select('users.id', 'users.name', 'users.profile_photo', 'users.is_online', 'users.last_seen_at'), 'messages' => fn ($q) => $q->latest()->limit(1)])
+                ->first();
+        }
+
+        return response()->json(['conversation' => $conversation]);
+    }
+
     public function sendAll(Request $request)
     {
         if (! $request->conversation_id) {
@@ -145,6 +169,49 @@ class ChatServices
         event(new NewMessageEvent($message, $request->conversation_id));
 
         return response()->json(['success' => true, 'message' => $message]);
+    }
+
+    public function markMessageAsSeen($messageId)
+    {
+        if (! Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $message = Message::find($messageId);
+
+        if (! $message) {
+            return response()->json(['error' => 'Message not found'], 404);
+        }
+
+        $message->seen_at = now();
+        $message->save();
+
+        event(new MessageSeenEvent(
+            $message->conversation_id,
+            $message->id,
+            Auth::id()
+        ));
+
+        return response()->json(['success' => true]);
+    }
+
+    public function broadcastTyping(Request $request)
+    {
+        if (! Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        if (! $request->conversation_id) {
+            return response()->json(['error' => 'Conversation ID is missing.'], 400);
+        }
+
+        event(new TypingEvent(
+            $request->conversation_id,
+            Auth::id(),
+            Auth::user()->name
+        ));
+
+        return response()->json(['success' => true]);
     }
 
     public function getContactsWithPresence()

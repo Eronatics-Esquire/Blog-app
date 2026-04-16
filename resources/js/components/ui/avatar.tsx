@@ -49,16 +49,18 @@ function AvatarFallback({
   )
 }
 
-interface AvatarWithStatusProps extends Omit<React.ComponentProps<typeof Avatar>, 'size'> {
+interface AvatarWithStatusProps {
   isOnline?: boolean
   lastSeenAt?: string | null
   statusSize?: "sm" | "md" | "lg"
   size?: "sm" | "md" | "lg"
+  className?: string
+  children?: React.ReactNode
 }
 
 const avatarSizes = {
   sm: "h-8 w-8",
-  md: "h-10 w-10", 
+  md: "h-10 w-10",
   lg: "h-12 w-12",
 }
 
@@ -69,11 +71,10 @@ function AvatarWithStatus({
   size = "md",
   className,
   children,
-  ...props
 }: AvatarWithStatusProps) {
   return (
     <div className={cn("relative inline-block", avatarSizes[size])}>
-      <Avatar className={cn(avatarSizes[size], className)} {...props}>
+      <Avatar className={cn(avatarSizes[size], className)}>
         {children}
       </Avatar>
       <StatusIndicator

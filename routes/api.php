@@ -12,6 +12,9 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     Route::get('/conversations', [ChatController::class, 'apiConversations']);
     Route::get('/conversations/{id}/messages', [ChatController::class, 'apiMessages']);
+    Route::post('/conversations/find-or-create/{userId}', [ChatController::class, 'apiFindOrCreate']);
     Route::post('/messages/send', [ChatController::class, 'apiSendMessage']);
+    Route::post('/messages/{id}/seen', [ChatController::class, 'apiMarkAsSeen']);
+    Route::post('/typing', [ChatController::class, 'apiTyping']);
     Route::get('/contacts/presence', [ChatController::class, 'getContactsWithPresence']);
 });
