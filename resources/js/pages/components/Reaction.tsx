@@ -1,12 +1,12 @@
+import { router, usePage } from '@inertiajs/react';
+import { MessageCircle, ThumbsUp } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { router, usePage } from '@inertiajs/react';
-import React, { useState } from 'react';
-import { MessageCircle, ThumbsUp } from 'lucide-react';
 
 const Reaction = ({
     postId,
@@ -18,14 +18,14 @@ const Reaction = ({
 }: {
     postId: number;
     initialReaction: string | null;
-    reactionCounts: Record<string, number>;
+    reactionCounts?: Record<string, number>;
     totalReactions: number;
     commentsCount?: number;
     onCommentClick?: () => void;
 }) => {
     const { auth } = usePage().props as any;
     const reactions = ['👍', '❤️', '😂', '😮', '😡'];
-    const reactionEntries = Object.entries(reactionCounts).filter(
+    const reactionEntries = Object.entries(reactionCounts || {}).filter(
         ([, count]) => count > 0,
     );
     const accurateTotalReactions = reactionEntries.reduce(
@@ -54,7 +54,7 @@ const Reaction = ({
             {(displayedTotalReactions > 0 || commentsCount > 0) && (
                 <div className="flex items-center justify-between text-sm text-[#65676b]">
                     <div className="flex items-center gap-2">
-                        {reactionEntries.length > 0 ? (
+                        {reactionEntries.length > 0 && (
                             <>
                                 <span className="text-base leading-none">
                                     {reactionEntries
@@ -64,11 +64,9 @@ const Reaction = ({
                                 </span>
                                 <span>{displayedTotalReactions}</span>
                             </>
-                        ) : (
-                            <span>{displayedTotalReactions}</span>
                         )}
                     </div>
-                    <span>{commentsCount} comments</span>
+                    {commentsCount > 0 && <span>{commentsCount} comments</span>}
                 </div>
             )}
 

@@ -1,6 +1,6 @@
 import { useForm } from '@inertiajs/react';
-import React, { useRef } from 'react';
 import { SendHorizontal } from 'lucide-react';
+import React, { useRef } from 'react';
 
 export const MessageInput = ({
     conversationId,

@@ -35,13 +35,25 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $userId = $request->user()?->id;
+        $user = $userId ? \App\Models\User::find($userId) : null;
+
+        if ($user && ! $this->isLogoutRequest($request)) {
+            $user->setOnline(true);
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? array_merge($user->toArray(), ['presence' => $user->presence]) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    protected function isLogoutRequest(Request $request): bool
+    {
+        return $request->is('logout') && $request->isMethod('post');
     }
 }

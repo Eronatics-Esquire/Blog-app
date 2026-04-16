@@ -1,7 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { dashboard } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
+import { useEchoPublic } from '@laravel/echo-react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -15,9 +14,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import PostCard, { Post } from './PostCard';
-import React from 'react';
-import { useEchoPublic } from '@laravel/echo-react';
+import AppLayout from '@/layouts/app-layout';
+import { dashboard } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
+import type { Post } from './PostCard';
+import PostCard from './PostCard';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Posts', href: dashboard() }];
 
@@ -38,7 +39,7 @@ export default function Dashboard({ posts }: Props) {
         images: [],
     });
 
-    useEchoPublic('posts', '.BroadcastEvent', () => {
+    useEchoPublic('posts', 'BroadcastEvent', () => {
         router.reload({ only: ['posts'] });
     });
 
@@ -84,7 +85,9 @@ export default function Dashboard({ posts }: Props) {
 
                             <div className="space-y-4">
                                 <div>
-                                    <Label className="text-[#65676b]">Title</Label>
+                                    <Label className="text-[#65676b]">
+                                        Title
+                                    </Label>
                                     <Input
                                         className="mt-1 border-[#ccd0d5] focus-visible:ring-[#1877f2]"
                                         value={postData.title}
@@ -100,7 +103,9 @@ export default function Dashboard({ posts }: Props) {
                                 </div>
 
                                 <div>
-                                    <Label className="text-[#65676b]">Post</Label>
+                                    <Label className="text-[#65676b]">
+                                        Post
+                                    </Label>
                                     <Textarea
                                         className="mt-1 min-h-36 resize-none border-[#ccd0d5] text-base focus-visible:ring-[#1877f2]"
                                         value={postData.post}
@@ -116,7 +121,9 @@ export default function Dashboard({ posts }: Props) {
                                 </div>
 
                                 <div>
-                                    <Label className="text-[#65676b]">Photo</Label>
+                                    <Label className="text-[#65676b]">
+                                        Photo
+                                    </Label>
                                     <Input
                                         type="file"
                                         accept="image/*"

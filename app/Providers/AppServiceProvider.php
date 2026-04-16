@@ -2,12 +2,12 @@
 
 namespace App\Providers;
 
-
-use App\Services\NotificationService;  // Add this line
-use App\Services\PostServices;  
+use App\Services\PresenceService;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -18,13 +18,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // $this->app->singleton(NotificationService::class, function ($app) {
-        //     return new NotificationService();
-        // });
-        // $this->app->singleton(PostServices::class, function ($app) {
-        //     return new PostServices($app->make(NotificationService::class));
-        // });
-    
+        $this->app->singleton(PresenceService::class, function () {
+            return new PresenceService;
+        });
     }
 
     /**
@@ -33,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Event::listen(Logout::class, function (Logout $event) {
+            if ($event->user) {
+                app(PresenceService::class)->userOffline($event->user);
+            }
+        });
     }
 
     /**

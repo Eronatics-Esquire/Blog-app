@@ -1,14 +1,5 @@
-import React, { useRef } from 'react';
 import { useForm, usePage, router } from '@inertiajs/react';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-} from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
+import { useEchoPublic } from '@laravel/echo-react';
 import {
     ChevronLeft,
     ChevronRight,
@@ -16,8 +7,15 @@ import {
     MoreHorizontal,
     Trash2,
 } from 'lucide-react';
-import Reaction from './components/Reaction';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import React, { useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
     DropdownMenu,
@@ -25,11 +23,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useEchoPublic } from '@laravel/echo-react';
-import EditPostDialog from './components/EditPostDialog';
-import CommentThreadItem, {
+import { Textarea } from '@/components/ui/textarea';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import type {
     ThreadComment,
 } from './components/CommentThreadItem';
+import CommentThreadItem from './components/CommentThreadItem';
+import EditPostDialog from './components/EditPostDialog';
+import Reaction from './components/Reaction';
 
 export type Comment = { comment: string; user: { name: string } };
 export type Post = {
@@ -72,7 +73,7 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
         processing,
         reset,
     } = useForm<{ comment: string }>({ comment: '' });
-    useEchoPublic(`posts.${post.id}`, '.BroadcastEvent', () => {
+    useEchoPublic(`posts.${post.id}`, 'BroadcastEvent', () => {
         router.reload({ only: ['posts'], reset: ['posts'] });
     });
 
@@ -180,7 +181,7 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
 
                 <TooltipProvider>
                     <CardContent className="space-y-4">
-                        <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#1c1e21]">
+                        <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-[#1c1e21]">
                             {post.post}
                         </p>
                         {imageUrls.length > 0 && (
@@ -246,28 +247,28 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                             )}
                         </div>
 
-                            <form
-                                onSubmit={handleCommentSubmit}
-                                className="mt-4 flex flex-col gap-2"
+                        <form
+                            onSubmit={handleCommentSubmit}
+                            className="mt-4 flex flex-col gap-2"
+                        >
+                            <Textarea
+                                ref={commentInputRef}
+                                disabled={!auth.user}
+                                className="min-h-20 resize-none rounded-2xl border-[#ccd0d5] bg-[#f0f2f5] text-sm focus-visible:ring-[#1877f2]"
+                                placeholder="Write a comment..."
+                                value={data.comment}
+                                onChange={(e) =>
+                                    setData('comment', e.target.value)
+                                }
+                            />
+                            <Button
+                                type="submit"
+                                className="w-32 self-end rounded-full bg-[#1877f2] hover:bg-[#166fe5]"
+                                disabled={processing || !auth.user}
                             >
-                                <Textarea
-                                    ref={commentInputRef}
-                                    disabled={!auth.user}
-                                    className="min-h-20 resize-none rounded-2xl border-[#ccd0d5] bg-[#f0f2f5] text-sm focus-visible:ring-[#1877f2]"
-                                    placeholder="Write a comment..."
-                                    value={data.comment}
-                                    onChange={(e) =>
-                                        setData('comment', e.target.value)
-                                    }
-                                />
-                                <Button
-                                    type="submit"
-                                    className="w-32 self-end rounded-full bg-[#1877f2] hover:bg-[#166fe5]"
-                                    disabled={processing || !auth.user}
-                                >
-                                    Comment
-                                </Button>
-                            </form>
+                                Comment
+                            </Button>
+                        </form>
                     </CardContent>
                 </TooltipProvider>
             </Card>

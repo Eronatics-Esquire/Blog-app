@@ -11,19 +11,23 @@ use Inertia\Inertia;
 
 class CommentServices
 {
-    public function getAllComments(){
+    public function __construct(protected NotificationService $notificationService) {}
+
+    public function getAllComments()
+    {
         // didisplay yung comments sa post ng user
         $comments = Comment::with(['user', 'post.user'])
-        ->latest()->get();
-        return Inertia::render('dashboard',[
-            'comments' => $comments
+            ->latest()->get();
+
+        return Inertia::render('dashboard', [
+            'comments' => $comments,
         ]);
     }
 
-
-    public function storeAllComments(CommentRequest $request, $postId){
+    public function storeAllComments(CommentRequest $request, $postId)
+    {
         // checheck nya yung user if sya ba yung naka login. ito din yung pag gawa ng comment
-        if (!Auth()->check()){
+        if (! Auth()->check()) {
             return redirect()->back();
         }
         $post = Post::findOrFail($postId);
@@ -36,8 +40,8 @@ class CommentServices
         ]);
         $comment->load('user');
         broadcast(new BroadcastEvent(comment: $comment));
-    return redirect()->back();
+        $this->notificationService->createCommentNotification($comment);
+
+        return redirect()->back();
     }
-
-
 }

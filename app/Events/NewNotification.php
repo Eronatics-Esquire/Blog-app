@@ -17,7 +17,6 @@ class NewNotification implements ShouldBroadcastNow
 
     public function broadcastOn()
     {
-        // 🔥 PUBLIC CHANNEL
         return new Channel('notifications');
     }
 

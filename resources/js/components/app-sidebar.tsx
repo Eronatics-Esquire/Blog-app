@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, MailIcon, StickyNoteIcon } from 'lucide-react';
+import { LayoutGrid, MailIcon, User } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -19,21 +19,20 @@ import type { NavItem } from '@/types';
 const mainNavItems: NavItem[] = [
     {
         title: 'All posts',
-        href: '/posts',
+        href: '/all-post',
         icon: LayoutGrid,
     },
     {
-        title: 'My posts',
-        href: dashboard(),
-        icon: StickyNoteIcon,
+        title: 'My profile',
+        href: '/profile',
+        icon: User,
     },
     {
         title: 'Chats',
         href: '/messages',
         icon: MailIcon,
     },
-    
-];     
+];
 
 const footerNavItems: NavItem[] = [
     // {

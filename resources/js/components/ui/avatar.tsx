@@ -2,6 +2,7 @@ import * as AvatarPrimitive from "@radix-ui/react-avatar"
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { StatusIndicator } from "./status-indicator"
 
 function Avatar({
   className,
@@ -11,7 +12,7 @@ function Avatar({
     <AvatarPrimitive.Root
       data-slot="avatar"
       className={cn(
-        "relative flex size-8 shrink-0 overflow-hidden rounded-full",
+        "relative flex shrink-0 overflow-hidden rounded-full",
         className
       )}
       {...props}
@@ -48,4 +49,40 @@ function AvatarFallback({
   )
 }
 
-export { Avatar, AvatarImage, AvatarFallback }
+interface AvatarWithStatusProps extends Omit<React.ComponentProps<typeof Avatar>, 'size'> {
+  isOnline?: boolean
+  lastSeenAt?: string | null
+  statusSize?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg"
+}
+
+const avatarSizes = {
+  sm: "h-8 w-8",
+  md: "h-10 w-10", 
+  lg: "h-12 w-12",
+}
+
+function AvatarWithStatus({
+  isOnline = false,
+  lastSeenAt = null,
+  statusSize = "md",
+  size = "md",
+  className,
+  children,
+  ...props
+}: AvatarWithStatusProps) {
+  return (
+    <div className={cn("relative inline-block", avatarSizes[size])}>
+      <Avatar className={cn(avatarSizes[size], className)} {...props}>
+        {children}
+      </Avatar>
+      <StatusIndicator
+        isOnline={isOnline}
+        lastSeenAt={lastSeenAt}
+        size={statusSize}
+      />
+    </div>
+  )
+}
+
+export { Avatar, AvatarImage, AvatarFallback, AvatarWithStatus }

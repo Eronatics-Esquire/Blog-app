@@ -1,10 +1,9 @@
-import { useEchoPublic } from '@laravel/echo-react';
-import PostCard, { Post } from './PostCard';
 import { InfiniteScroll, router, useForm, usePage } from '@inertiajs/react';
-import FBnavbar from './components/FBnavbar';
-import { Input } from '@/components/ui/input';
+import { useEchoPublic } from '@laravel/echo-react';
+import { useEffect } from 'react';
+import FbSideBarLeft from '@/components/FbSideBarLeft';
+import FbSideBarRight from '@/components/FbSideBarRight';
 import { Button } from '@/components/ui/button';
-import { User } from '@/types';
 import {
     Dialog,
     DialogClose,
@@ -14,10 +13,14 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import FbSideBarLeft from '@/components/FbSideBarLeft';
-import FbSideBarRight from '@/components/FbSideBarRight';
+import type { User } from '@/types';
+import FBnavbar from './components/FBnavbar';
+import PostCard from './PostCard';
+import FloatingChat from '@/components/FloatingChat';
+import type { Post } from './PostCard';
 
 type Props = {
     posts: { data: Post[] };
@@ -27,9 +30,41 @@ type Props = {
 const AllPost = ({ posts, user }: Props) => {
     const { auth } = usePage().props as { auth: { user?: User } };
 
-    useEchoPublic('posts', '.BroadcastEvent', () => {
+    useEchoPublic('posts', 'BroadcastEvent', () => {
         router.reload({ only: ['posts'], reset: ['posts'] });
     });
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const postId = params.get('post');
+        const commentId = params.get('comment');
+
+        if (postId) {
+            setTimeout(() => {
+                const element = document.getElementById(`post-${postId}`);
+                if (element) {
+                    element.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                    });
+                }
+
+                if (commentId) {
+                    setTimeout(() => {
+                        const commentElement = document.getElementById(
+                            `comment-${commentId}`,
+                        );
+                        if (commentElement) {
+                            commentElement.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center',
+                            });
+                        }
+                    }, 500);
+                }
+            }, 100);
+        }
+    }, []);
 
     const { data, setData, post, reset, processing } = useForm<{
         title: string;
@@ -95,7 +130,9 @@ const AllPost = ({ posts, user }: Props) => {
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e4e6eb] text-sm font-semibold text-[#1c1e21]">
-                                                {displayName.charAt(0).toUpperCase()}
+                                                {displayName
+                                                    .charAt(0)
+                                                    .toUpperCase()}
                                             </div>
                                             <p className="text-sm font-semibold text-[#050505]">
                                                 {displayName}
@@ -147,7 +184,8 @@ const AllPost = ({ posts, user }: Props) => {
                                                     setData(
                                                         'images',
                                                         Array.from(
-                                                            e.target.files ?? [],
+                                                            e.target.files ??
+                                                                [],
                                                         ),
                                                     )
                                                 }
@@ -206,11 +244,12 @@ const AllPost = ({ posts, user }: Props) => {
                         <InfiniteScroll data="posts">
                             <div className="flex flex-col gap-4">
                                 {posts.data.map((p) => (
-                                    <PostCard
-                                        key={p.id}
-                                        post={p}
-                                        onDelete={handleDelete}
-                                    />
+                                    <div key={p.id} id={`post-${p.id}`}>
+                                        <PostCard
+                                            post={p}
+                                            onDelete={handleDelete}
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         </InfiniteScroll>
@@ -221,6 +260,8 @@ const AllPost = ({ posts, user }: Props) => {
                     <FbSideBarRight />
                 </div>
             </div>
+
+            <FloatingChat />
         </div>
     );
 };

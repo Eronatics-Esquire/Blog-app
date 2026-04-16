@@ -1,9 +1,13 @@
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { router, useForm } from '@inertiajs/react';
 import { ThumbsUp } from 'lucide-react';
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export type ThreadComment = {
     id: number;
@@ -38,7 +42,11 @@ const reactionSummary = (comment: ThreadComment) => {
     );
 };
 
-export default function CommentThreadItem({ comment, allComments, postId }: Props) {
+export default function CommentThreadItem({
+    comment,
+    allComments,
+    postId,
+}: Props) {
     const [showReply, setShowReply] = React.useState(false);
     const { data, setData, post, processing, reset } = useForm<{
         comment: string;
@@ -48,7 +56,9 @@ export default function CommentThreadItem({ comment, allComments, postId }: Prop
         parent_id: comment.id,
     });
 
-    const childReplies = allComments.filter((item) => item.parent_id === comment.id);
+    const childReplies = allComments.filter(
+        (item) => item.parent_id === comment.id,
+    );
 
     const submitReply = (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,8 +90,8 @@ export default function CommentThreadItem({ comment, allComments, postId }: Prop
     };
 
     return (
-        <div className="mb-3">
-            <div className="whitespace-pre-wrap rounded-2xl bg-[#f0f2f5] px-3 py-2 text-sm text-[#1c1e21]">
+        <div className="mb-3" id={`comment-${comment.id}`}>
+            <div className="rounded-2xl bg-[#f0f2f5] px-3 py-2 text-sm whitespace-pre-wrap text-[#1c1e21]">
                 <span className="font-semibold">{comment.user.name}</span>
                 <p>{comment.comment}</p>
             </div>
@@ -95,7 +105,13 @@ export default function CommentThreadItem({ comment, allComments, postId }: Prop
                             onClick={reactDefaultLike}
                         >
                             <ThumbsUp className="mr-1 h-3.5 w-3.5" />
-                            <span className={comment.user_reaction ? 'text-[#1877f2]' : ''}>
+                            <span
+                                className={
+                                    comment.user_reaction
+                                        ? 'text-[#1877f2]'
+                                        : ''
+                                }
+                            >
                                 {comment.user_reaction ?? 'Like'}
                             </span>
                         </button>
@@ -127,7 +143,10 @@ export default function CommentThreadItem({ comment, allComments, postId }: Prop
             <div>{reactionSummary(comment)}</div>
 
             {showReply && (
-                <form onSubmit={submitReply} className="mt-2 ml-8 flex flex-col gap-2">
+                <form
+                    onSubmit={submitReply}
+                    className="mt-2 ml-8 flex flex-col gap-2"
+                >
                     <Textarea
                         value={data.comment}
                         onChange={(e) => setData('comment', e.target.value)}

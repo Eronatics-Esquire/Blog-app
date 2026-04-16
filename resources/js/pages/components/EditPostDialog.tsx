@@ -1,4 +1,6 @@
 import { router, useForm } from '@inertiajs/react';
+import { useEchoPublic } from '@laravel/echo-react';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -10,9 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Post } from '../PostCard';
-import { useEchoPublic } from '@laravel/echo-react';
+import type { Post } from '../PostCard';
 
 type Props = {
     post: Post | null;

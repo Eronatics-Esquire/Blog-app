@@ -1,5 +1,6 @@
-import React from 'react';
+import { Link, usePage } from '@inertiajs/react';
 import { Calendar, Clock3, Film, Users } from 'lucide-react';
+import React from 'react';
 
 type NavItem = {
     label: string;
@@ -11,21 +12,6 @@ const CircleIcon = ({ children }: { children: React.ReactNode }) => (
         {children}
     </div>
 );
-
-const NAV_ITEMS: NavItem[] = [
-    {
-        label: 'Aaron Castaneda',
-        icon: (
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1877f2] text-sm font-semibold text-white">
-                A
-            </div>
-        ),
-    },
-    { label: 'Watch', icon: <CircleIcon><Film className="h-5 w-5" /></CircleIcon> },
-    { label: 'Events', icon: <CircleIcon><Calendar className="h-5 w-5" /></CircleIcon> },
-    { label: 'Friends', icon: <CircleIcon><Users className="h-5 w-5" /></CircleIcon> },
-    { label: 'Memories', icon: <CircleIcon><Clock3 className="h-5 w-5" /></CircleIcon> },
-];
 
 const SHORTCUT_ITEMS = [
     {
@@ -48,9 +34,65 @@ const SHORTCUT_ITEMS = [
 ];
 
 const FbSideBarLeft = () => {
+    const { auth } = usePage().props as { auth?: { user?: { name: string } } };
+    const userName = auth?.user?.name ?? 'User';
+    const userInitial = userName.charAt(0).toUpperCase();
+
+    const navItems: NavItem[] = [
+        {
+            label: userName,
+            icon: (
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1877f2] text-sm font-semibold text-white">
+                    {userInitial}
+                </div>
+            ),
+        },
+        {
+            label: 'Watch',
+            icon: (
+                <CircleIcon>
+                    <Film className="h-5 w-5" />
+                </CircleIcon>
+            ),
+        },
+        {
+            label: 'Events',
+            icon: (
+                <CircleIcon>
+                    <Calendar className="h-5 w-5" />
+                </CircleIcon>
+            ),
+        },
+        {
+            label: 'Friends',
+            icon: (
+                <CircleIcon>
+                    <Users className="h-5 w-5" />
+                </CircleIcon>
+            ),
+        },
+        {
+            label: 'Memories',
+            icon: (
+                <CircleIcon>
+                    <Clock3 className="h-5 w-5" />
+                </CircleIcon>
+            ),
+        },
+    ];
+
     return (
         <div className="sticky top-0 hidden h-full flex-col gap-1 overflow-y-auto rounded-xl border bg-white px-2 pt-4 pb-6 md:flex">
-            {NAV_ITEMS.map((item) => (
+            <Link
+                href="/profile"
+                className="flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-gray-100"
+            >
+                {navItems[0].icon}
+                <span className="text-[15px] font-medium text-gray-900">
+                    {userName}
+                </span>
+            </Link>
+            {navItems.slice(1).map((item) => (
                 <button
                     key={item.label}
                     className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-gray-100"
