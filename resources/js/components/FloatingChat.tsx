@@ -4,6 +4,7 @@ import { MessageCircleIcon, X, Send, ChevronLeft, Minus } from 'lucide-react';
 import { useEchoPublic } from '@laravel/echo-react';
 import { AvatarWithStatus } from './ui/avatar';
 import { formatTimeAgo } from './ui/status-indicator';
+import { Dialog, DialogContent } from './ui/dialog';
 
 const POLLING_INTERVAL = 30000;
 const TYPING_TIMEOUT = 1000;
@@ -188,15 +189,7 @@ const ConversationListItem = ({
     );
 };
 
-const ChatBubble = ({
-    message,
-    isMe,
-    showSeen,
-}: {
-    message: Message;
-    isMe: boolean;
-    showSeen: boolean;
-}) => {
+const ChatBubble = ({ message, isMe }: { message: Message; isMe: boolean }) => {
     const time = new Date(message.created_at).toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
@@ -218,15 +211,6 @@ const ChatBubble = ({
                     }`}
                 >
                     <span>{time}</span>
-                    {isMe && showSeen && (
-                        <>
-                            {message.seen_at ? (
-                                <span>Seen</span>
-                            ) : (
-                                <span>Sent</span>
-                            )}
-                        </>
-                    )}
                 </div>
             </div>
         </div>
@@ -250,12 +234,20 @@ export default function FloatingChat() {
     const [newMessage, setNewMessage] = useState('');
     const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
     const [isSending, setIsSending] = useState(false);
+    const [deleteMenuOpen, setDeleteMenuOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const scrollPositionRef = useRef(0);
 
     const channelId = activeChat?.id ? `chat.${activeChat.id}` : '';
+
+    useEffect(() => {
+        if (window.Echo && channelId) {
+            console.log('Subscribing to channel:', channelId);
+        }
+    }, [channelId]);
 
     const activeChatRef = useRef(activeChat);
     activeChatRef.current = activeChat;
@@ -311,6 +303,30 @@ export default function FloatingChat() {
                         prev.filter((u) => u.userId !== data.user_id),
                     );
                 }, TYPING_TIMEOUT);
+            }
+        },
+    );
+
+    useEchoPublic(
+        channelId,
+        '.MessageSeenEvent',
+        (data: {
+            conversation_id: number;
+            message_id: number;
+            seen_by_user_id: number;
+        }) => {
+            console.log('MessageSeenEvent received:', data);
+            if (
+                activeChatRef.current &&
+                data.conversation_id === activeChatRef.current.id
+            ) {
+                setMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === data.message_id
+                            ? { ...msg, seen_at: new Date().toISOString() }
+                            : msg,
+                    ),
+                );
             }
         },
     );
@@ -427,6 +443,8 @@ export default function FloatingChat() {
     const markAsSeen = (messageId: number) => {
         if (!activeChat) return;
 
+        console.log('Marking message as seen:', messageId);
+
         fetch(`/api/messages/${messageId}/seen`, {
             method: 'POST',
             headers: {
@@ -466,11 +484,45 @@ export default function FloatingChat() {
         setShowList(true);
         setIsMinimized(false);
         setTypingUsers([]);
+        setDeleteMenuOpen(false);
+    };
+
+    const handleDeleteConversation = () => {
+        if (!activeChat) return;
+        setDeleteMenuOpen(false);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDeleteConversation = () => {
+        if (!activeChat) return;
+
+        fetch(`/api/conversations/${activeChat.id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        })
+            .then(() => {
+                setConversations((prev) =>
+                    prev.filter((c) => c.id !== activeChat.id),
+                );
+                window.dispatchEvent(
+                    new CustomEvent('chat-conversation-deleted', {
+                        detail: { conversationId: activeChat.id },
+                    }),
+                );
+                handleClose();
+            })
+            .catch(console.error);
+        setDeleteDialogOpen(false);
     };
 
     const otherUser = activeChat ? getOtherUser(activeChat, authUserId) : null;
     const lastMessage = messages[messages.length - 1];
-    const showSeen = lastMessage?.user_id === authUserId;
+    const showSeen =
+        lastMessage?.user_id === authUserId && !!lastMessage?.seen_at;
 
     useEffect(() => {
         if (
@@ -481,6 +533,17 @@ export default function FloatingChat() {
             markAsSeen(lastMessage.id);
         }
     }, [lastMessage?.id]);
+
+    useEffect(() => {
+        if (activeChat && messages.length > 0) {
+            const unreadMessages = messages.filter(
+                (msg) => msg.user_id !== authUserId && !msg.seen_at,
+            );
+            if (unreadMessages.length > 0) {
+                markAsSeen(unreadMessages[unreadMessages.length - 1].id);
+            }
+        }
+    }, [activeChat?.id]);
 
     return (
         <div className="fixed right-4 bottom-4 z-50">
@@ -572,20 +635,68 @@ export default function FloatingChat() {
                         </div>
                         <div className="flex items-center gap-1">
                             {!isMinimized && activeChat && (
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (chatScrollRef.current) {
-                                            scrollPositionRef.current =
-                                                chatScrollRef.current.scrollTop;
-                                        }
-                                        setIsMinimized(true);
-                                    }}
-                                    className="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/20"
-                                >
-                                    <Minus className="h-4 w-4" />
-                                </button>
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (chatScrollRef.current) {
+                                                scrollPositionRef.current =
+                                                    chatScrollRef.current.scrollTop;
+                                            }
+                                            setIsMinimized(true);
+                                        }}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/20"
+                                    >
+                                        <Minus className="h-4 w-4" />
+                                    </button>
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeleteMenuOpen(
+                                                    !deleteMenuOpen,
+                                                );
+                                            }}
+                                            className="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/20"
+                                        >
+                                            <svg
+                                                className="h-4 w-4"
+                                                fill="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                            </svg>
+                                        </button>
+                                        {deleteMenuOpen && (
+                                            <div className="absolute top-full right-0 z-50 mt-1 w-48 overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteConversation();
+                                                    }}
+                                                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-red-600 hover:bg-gray-100"
+                                                >
+                                                    <svg
+                                                        className="h-5 w-5"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                        />
+                                                    </svg>
+                                                    Delete conversation
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
                             )}
                             <button
                                 type="button"
@@ -667,9 +778,32 @@ export default function FloatingChat() {
                                                 isMe={
                                                     msg.user_id === authUserId
                                                 }
-                                                showSeen={showSeen}
                                             />
                                         ))}
+                                        {showSeen && messages.length > 0 && (
+                                            <div className="flex items-center justify-end px-2">
+                                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                    {otherUser?.profile_photo ? (
+                                                        <img
+                                                            src={`/storage/${otherUser.profile_photo}`}
+                                                            alt={
+                                                                otherUser?.name ||
+                                                                ''
+                                                            }
+                                                            className="h-5 w-5 rounded-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-300 text-[8px] font-bold text-gray-600">
+                                                            {otherUser?.name
+                                                                ?.charAt(0)
+                                                                .toUpperCase() ||
+                                                                '?'}
+                                                        </div>
+                                                    )}
+                                                    <span>Seen</span>
+                                                </div>
+                                            </div>
+                                        )}
                                         {typingUsers.length > 0 && (
                                             <TypingIndicator />
                                         )}
@@ -710,6 +844,35 @@ export default function FloatingChat() {
                     )}
                 </div>
             )}
+
+            {/* Delete Conversation Dialog */}
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent className="max-w-[400px] p-0">
+                    <div className="p-4">
+                        <h3 className="mb-2 text-center text-xl font-bold text-[#050505]">
+                            Delete conversation?
+                        </h3>
+                        <p className="mb-6 text-center text-sm text-[#65676b]">
+                            This conversation will be permanently deleted for
+                            you. Others in the conversation won't be notified.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteDialogOpen(false)}
+                                className="flex-1 rounded-lg border border-[#dadde1] bg-white py-2.5 text-[15px] font-semibold text-[#050505] transition-colors hover:bg-[#f0f2f5]"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDeleteConversation}
+                                className="flex-1 rounded-lg bg-[#fa3e3b] py-2.5 text-[15px] font-semibold text-white transition-colors hover:bg-[#e3332d]"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

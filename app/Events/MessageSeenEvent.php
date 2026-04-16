@@ -16,16 +16,16 @@ class MessageSeenEvent implements ShouldBroadcastNow
 
     public int $messageId;
 
-    public int $userId;
+    public int $seenByUserId;
 
     public function __construct(
         int $conversationId,
         int $messageId,
-        int $userId,
+        int $seenByUserId,
     ) {
         $this->conversationId = $conversationId;
         $this->messageId = $messageId;
-        $this->userId = $userId;
+        $this->seenByUserId = $seenByUserId;
     }
 
     public function broadcastOn(): array
@@ -45,7 +45,7 @@ class MessageSeenEvent implements ShouldBroadcastNow
         return [
             'conversation_id' => $this->conversationId,
             'message_id' => $this->messageId,
-            'user_id' => $this->userId,
+            'seen_by_user_id' => $this->seenByUserId,
         ];
     }
 }

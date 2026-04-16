@@ -16,7 +16,7 @@ class ChatServices
 {
     public function getAllChat()
     {
-        if (! Auth()->check()) {
+        if (! Auth::check()) {
             return redirect()->back();
         }
 
@@ -118,21 +118,42 @@ class ChatServices
 
     public function getConversationsForApi()
     {
-        if (! Auth()->check()) {
+        if (! Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+
+        $userId = Auth::id();
+
+        $deletedRecords = \App\Models\DeletedConversation::where('user_id', $userId)
+            ->get()
+            ->keyBy('conversation_id');
 
         $conversations = Auth::user()
             ->conversations()
             ->with(['users' => fn ($q) => $q->select('users.id', 'users.name', 'users.first_name', 'users.last_name', 'users.profile_photo', 'users.is_online', 'users.last_seen_at'), 'messages' => fn ($q) => $q->orderBy('created_at', 'desc')->limit(20)])
-            ->get();
+            ->get()
+            ->filter(function ($conversation) use ($userId, $deletedRecords) {
+                $deletedAt = $deletedRecords[$conversation->id]?->deleted_at;
+
+                if (! $deletedAt) {
+                    return true;
+                }
+
+                $hasNewMessage = $conversation->messages
+                    ->where('user_id', '!=', $userId)
+                    ->where('created_at', '>=', $deletedAt)
+                    ->isNotEmpty();
+
+                return $hasNewMessage;
+            })
+            ->values();
 
         return response()->json(['conversations' => $conversations]);
     }
 
     public function getMessagesForApi($conversationId)
     {
-        if (! Auth()->check()) {
+        if (! Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -140,10 +161,18 @@ class ChatServices
             ->conversations()
             ->findOrFail($conversationId);
 
-        $messages = Message::where('conversation_id', $conversationId)
-            ->with('user')
-            ->oldest()
-            ->get();
+        $query = Message::where('conversation_id', $conversationId)
+            ->with('user');
+
+        $deletedRecord = \App\Models\DeletedConversation::where('user_id', Auth::id())
+            ->where('conversation_id', $conversationId)
+            ->first();
+
+        if ($deletedRecord && $deletedRecord->deleted_at) {
+            $query->where('created_at', '>=', $deletedRecord->deleted_at);
+        }
+
+        $messages = $query->oldest()->get();
 
         return response()->json(['messages' => $messages, 'conversation' => $conversation]);
     }
@@ -183,16 +212,21 @@ class ChatServices
             return response()->json(['error' => 'Message not found'], 404);
         }
 
-        Message::where('conversation_id', $message->conversation_id)
+        $unreadMessages = Message::where('conversation_id', $message->conversation_id)
             ->whereNull('seen_at')
             ->where('user_id', '!=', Auth::id())
-            ->update(['seen_at' => now()]);
+            ->get();
 
-        event(new MessageSeenEvent(
-            $message->conversation_id,
-            $message->id,
-            Auth::id()
-        ));
+        foreach ($unreadMessages as $unreadMessage) {
+            $unreadMessage->seen_at = now();
+            $unreadMessage->save();
+
+            event(new MessageSeenEvent(
+                $message->conversation_id,
+                $unreadMessage->id,
+                Auth::id()
+            ));
+        }
 
         return response()->json(['success' => true]);
     }
@@ -244,9 +278,12 @@ class ChatServices
             return response()->json(['error' => 'Conversation not found'], 404);
         }
 
-        $conversation->messages()->delete();
-        $conversation->users()->detach();
-        $conversation->delete();
+        \App\Models\DeletedConversation::firstOrCreate([
+            'user_id' => Auth::id(),
+            'conversation_id' => $conversationId,
+        ], [
+            'deleted_at' => now(),
+        ]);
 
         return response()->json(['success' => true]);
     }
