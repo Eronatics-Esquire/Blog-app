@@ -227,6 +227,7 @@ export default function FloatingChat() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+    const [isSending, setIsSending] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -352,7 +353,9 @@ export default function FloatingChat() {
     }, [messages, typingUsers]);
 
     const sendMessage = () => {
-        if (!newMessage.trim() || !activeChat) return;
+        if (!newMessage.trim() || !activeChat || isSending) return;
+
+        setIsSending(true);
 
         fetch('/api/messages/send', {
             method: 'POST',
@@ -378,7 +381,8 @@ export default function FloatingChat() {
             })
             .then((res) => res.json())
             .then((data) => setMessages(data.messages || []))
-            .catch(console.error);
+            .catch(console.error)
+            .finally(() => setIsSending(false));
     };
 
     const sendTyping = () => {
@@ -643,13 +647,17 @@ export default function FloatingChat() {
                                                 e.key === 'Enter' &&
                                                 sendMessage()
                                             }
+                                            disabled={isSending}
                                             placeholder="Aa"
-                                            className="flex-1 rounded-full bg-gray-100 px-4 py-2 text-sm focus:bg-gray-50 focus:outline-none"
+                                            className="flex-1 rounded-full bg-gray-100 px-4 py-2 text-sm focus:bg-gray-50 focus:outline-none disabled:opacity-50"
                                         />
                                         <button
                                             type="button"
                                             onClick={sendMessage}
-                                            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0084ff] text-white hover:bg-[#0073e4]"
+                                            disabled={
+                                                isSending || !newMessage.trim()
+                                            }
+                                            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0084ff] text-white hover:bg-[#0073e4] disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             <Send className="h-4 w-4" />
                                         </button>

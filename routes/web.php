@@ -24,7 +24,7 @@ Route::post('/comments/{comment}/react', [ReactionController::class, 'reactComme
     ->name('comments.react')
     ->middleware('auth');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/profile/update-profile-photo', [ProfileController::class, 'updateProfilePhoto']);
     Route::post('/profile/update-cover-photo', [ProfileController::class, 'updateCoverPhoto']);

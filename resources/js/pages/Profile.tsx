@@ -74,16 +74,18 @@ export default function Profile({ user, isOwnProfile = true }: Props) {
         const formData = new FormData();
         formData.append('profile_photo', file);
 
+        const csrfToken =
+            document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content') || '';
+
         fetch('/profile/update-profile-photo', {
             method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+            },
             body: formData,
             credentials: 'include',
-            headers: {
-                'X-CSRF-TOKEN':
-                    document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') || '',
-            },
         })
             .then((res) => res.json())
             .then((data) => {
@@ -111,18 +113,26 @@ export default function Profile({ user, isOwnProfile = true }: Props) {
         const formData = new FormData();
         formData.append('cover_photo', file);
 
+        const csrfToken =
+            document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content') || '';
+
         fetch('/profile/update-cover-photo', {
             method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                Accept: 'application/json',
+            },
             body: formData,
             credentials: 'include',
-            headers: {
-                'X-CSRF-TOKEN':
-                    document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') || '',
-            },
         })
-            .then((res) => res.json())
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                return res.json();
+            })
             .then((data) => {
                 if (data.cover_photo_url) {
                     window.location.reload();
