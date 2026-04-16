@@ -111,7 +111,7 @@ class User extends Authenticatable
 
     public function conversations()
     {
-        return $this->belongsToMany(Conversation::class, 'conversation_users');
+        return $this->belongsToMany(Conversation::class, 'conversation_users')->withPivot('deleted_at');
     }
 
     public function messages()

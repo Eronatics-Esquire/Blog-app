@@ -8,11 +8,13 @@ class Conversation extends Model
 {
     protected $fillable = [];
 
-    public function users() {
-        return $this->belongsToMany(User::class, 'conversation_users');
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'conversation_users')->withPivot('deleted_at');
     }
 
-    public function messages() {
+    public function messages()
+    {
         return $this->hasMany(Message::class);
     }
 }

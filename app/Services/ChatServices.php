@@ -124,27 +124,40 @@ class ChatServices
 
         $userId = Auth::id();
 
-        $deletedRecords = \App\Models\DeletedConversation::where('user_id', $userId)
-            ->get()
-            ->keyBy('conversation_id');
-
         $conversations = Auth::user()
             ->conversations()
-            ->with(['users' => fn ($q) => $q->select('users.id', 'users.name', 'users.first_name', 'users.last_name', 'users.profile_photo', 'users.is_online', 'users.last_seen_at'), 'messages' => fn ($q) => $q->orderBy('created_at', 'desc')->limit(20)])
+            ->with([
+                'users' => fn ($q) => $q->select('users.id', 'users.name', 'users.first_name', 'users.last_name', 'users.profile_photo', 'users.is_online', 'users.last_seen_at'),
+                'messages' => fn ($q) => $q->orderBy('created_at', 'desc')->limit(20),
+            ])
             ->get()
-            ->filter(function ($conversation) use ($userId, $deletedRecords) {
-                $deletedAt = $deletedRecords[$conversation->id]?->deleted_at;
+            ->filter(function ($conversation) use ($userId) {
+                $myUser = $conversation->users->firstWhere('id', $userId);
+                $myDeletedAt = $myUser?->pivot?->deleted_at;
 
-                if (! $deletedAt) {
+                \Illuminate\Support\Facades\Log::info('Conversation '.$conversation->id.' - deleted_at: '.($myDeletedAt ?? 'null'));
+
+                if (! $myDeletedAt) {
                     return true;
                 }
 
-                $hasNewMessage = $conversation->messages
-                    ->where('user_id', '!=', $userId)
-                    ->where('created_at', '>=', $deletedAt)
-                    ->isNotEmpty();
+                $latestMessage = $conversation->messages->sortByDesc('created_at')->first();
 
-                return $hasNewMessage;
+                if (! $latestMessage) {
+                    return false;
+                }
+
+                $messageTime = $latestMessage->created_at instanceof \Carbon\Carbon
+                    ? $latestMessage->created_at
+                    : \Carbon\Carbon::parse($latestMessage->created_at);
+                $deletedTime = $myDeletedAt instanceof \Carbon\Carbon
+                    ? $myDeletedAt
+                    : \Carbon\Carbon::parse($myDeletedAt);
+
+                $shouldShow = $messageTime->gt($deletedTime);
+                \Illuminate\Support\Facades\Log::info('Latest message: '.$messageTime.', Deleted at: '.$deletedTime.', Show: '.($shouldShow ? 'yes' : 'no'));
+
+                return $shouldShow;
             })
             ->values();
 
@@ -159,17 +172,17 @@ class ChatServices
 
         $conversation = Auth::user()
             ->conversations()
+            ->with(['users' => fn ($q) => $q->select('users.id', 'users.name', 'users.first_name', 'users.last_name', 'users.profile_photo', 'users.is_online', 'users.last_seen_at')])
             ->findOrFail($conversationId);
 
         $query = Message::where('conversation_id', $conversationId)
             ->with('user');
 
-        $deletedRecord = \App\Models\DeletedConversation::where('user_id', Auth::id())
-            ->where('conversation_id', $conversationId)
-            ->first();
+        $myUser = $conversation->users->firstWhere('id', Auth::id());
+        $myDeletedAt = $myUser?->pivot?->deleted_at;
 
-        if ($deletedRecord && $deletedRecord->deleted_at) {
-            $query->where('created_at', '>=', $deletedRecord->deleted_at);
+        if ($myDeletedAt) {
+            $query->where('created_at', '>=', $myDeletedAt);
         }
 
         $messages = $query->oldest()->get();
@@ -278,12 +291,11 @@ class ChatServices
             return response()->json(['error' => 'Conversation not found'], 404);
         }
 
-        \App\Models\DeletedConversation::firstOrCreate([
-            'user_id' => Auth::id(),
-            'conversation_id' => $conversationId,
-        ], [
-            'deleted_at' => now(),
-        ]);
+        Auth::user()
+            ->conversations()
+            ->updateExistingPivot($conversationId, ['deleted_at' => now()]);
+
+        \Illuminate\Support\Facades\Log::info('User '.Auth::id().' deleted conversation '.$conversationId);
 
         return response()->json(['success' => true]);
     }

@@ -219,6 +219,16 @@ const ChatBubble = ({ message, isMe }: { message: Message; isMe: boolean }) => {
 
 let authUserId: number | undefined;
 
+type Contact = {
+    id: number;
+    name: string;
+    first_name?: string;
+    last_name?: string;
+    profile_photo?: string;
+    is_online?: boolean;
+    last_seen_at?: string;
+};
+
 export default function FloatingChat() {
     const { props } = usePage() as {
         props: { auth?: { user?: { id: number } } };
@@ -229,6 +239,7 @@ export default function FloatingChat() {
     const [isMinimized, setIsMinimized] = useState(false);
     const [showList, setShowList] = useState(true);
     const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [contacts, setContacts] = useState<Contact[]>([]);
     const [activeChat, setActiveChat] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -363,11 +374,45 @@ export default function FloatingChat() {
             .catch(console.error);
     };
 
+    const fetchContacts = () => {
+        fetch('/api/contacts/presence', {
+            headers: { Accept: 'application/json' },
+            credentials: 'include',
+        })
+            .then((res) => res.json())
+            .then((data) => setContacts(data.contacts || []))
+            .catch(console.error);
+    };
+
+    const startConversation = (userId: number) => {
+        fetch(`/api/conversations/find-or-create/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+                Accept: 'application/json',
+            },
+            credentials: 'include',
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.conversation) {
+                    fetchConversations();
+                    openChat(data.conversation);
+                }
+            })
+            .catch(console.error);
+    };
+
     useEffect(() => {
         if (!isOpen || !showList) return;
 
         fetchConversations();
-        const interval = setInterval(fetchConversations, POLLING_INTERVAL);
+        fetchContacts();
+        const interval = setInterval(() => {
+            fetchConversations();
+            fetchContacts();
+        }, POLLING_INTERVAL);
         return () => clearInterval(interval);
     }, [isOpen, showList]);
 
@@ -716,9 +761,9 @@ export default function FloatingChat() {
                         <>
                             {/* Conversation List */}
                             {showList && (
-                                <div className="flex-1 overflow-y-auto">
+                                <div className="flex h-full flex-col overflow-y-auto">
                                     {conversations.length === 0 ? (
-                                        <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                                        <div className="flex flex-1 items-center justify-center text-sm text-gray-500">
                                             No conversations yet
                                         </div>
                                     ) : (
@@ -730,6 +775,83 @@ export default function FloatingChat() {
                                                 onClick={() => openChat(convo)}
                                             />
                                         ))
+                                    )}
+
+                                    {/* Start Conversation Section */}
+                                    {contacts.length > 0 && (
+                                        <div className="border-t">
+                                            <div className="px-3 py-2">
+                                                <p className="text-xs font-semibold text-gray-500">
+                                                    Start conversation
+                                                </p>
+                                            </div>
+                                            {contacts
+                                                .filter(
+                                                    (contact) =>
+                                                        contact.id !==
+                                                            authUserId &&
+                                                        !conversations.some(
+                                                            (convo) =>
+                                                                convo.users?.some(
+                                                                    (u) =>
+                                                                        u.id ===
+                                                                        contact.id,
+                                                                ),
+                                                        ),
+                                                )
+                                                .slice(0, 5)
+                                                .map((contact) => {
+                                                    const contactName =
+                                                        [
+                                                            contact.first_name,
+                                                            contact.last_name,
+                                                        ]
+                                                            .filter(Boolean)
+                                                            .join(' ') ||
+                                                        contact.name;
+                                                    return (
+                                                        <div
+                                                            key={contact.id}
+                                                            onClick={() =>
+                                                                startConversation(
+                                                                    contact.id,
+                                                                )
+                                                            }
+                                                            className="flex w-full cursor-pointer items-center gap-3 px-3 py-2 hover:bg-gray-100"
+                                                        >
+                                                            <div className="relative">
+                                                                {contact.profile_photo ? (
+                                                                    <img
+                                                                        src={`/storage/${contact.profile_photo}`}
+                                                                        alt={
+                                                                            contactName
+                                                                        }
+                                                                        className="h-8 w-8 rounded-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0084ff] text-xs font-semibold text-white">
+                                                                        {contactName
+                                                                            .charAt(
+                                                                                0,
+                                                                            )
+                                                                            .toUpperCase()}
+                                                                    </div>
+                                                                )}
+                                                                <span
+                                                                    className={`absolute right-0 bottom-0 h-2 w-2 rounded-full border-2 border-white ${
+                                                                        contact.is_online
+                                                                            ? 'bg-green-500'
+                                                                            : 'bg-gray-400'
+                                                                    }`}
+                                                                />
+                                                            </div>
+                                                            <span className="text-sm text-gray-700">
+                                                                {contactName}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -753,9 +875,15 @@ export default function FloatingChat() {
                                             />
                                         </AvatarWithStatus>
                                         <div>
-                                            <div className="text-sm font-semibold text-gray-900">
+                                            <a
+                                                href={`/profile/${otherUser?.id}`}
+                                                className="text-sm font-semibold text-gray-900 hover:underline"
+                                                onClick={(e) =>
+                                                    e.stopPropagation()
+                                                }
+                                            >
                                                 {otherUser?.name}
-                                            </div>
+                                            </a>
                                             <div className="text-xs text-gray-500">
                                                 {otherUser?.is_online
                                                     ? 'Active now'
