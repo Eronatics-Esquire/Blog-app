@@ -21,6 +21,7 @@ import FBnavbar from './components/FBnavbar';
 import PostCard from './PostCard';
 import FloatingChat from '@/components/FloatingChat';
 import type { Post } from './PostCard';
+import { getOtherUser } from '@/components/floating-chat';
 
 type Props = {
     posts: { data: Post[] };
@@ -28,7 +29,8 @@ type Props = {
 };
 
 const AllPost = ({ posts, user }: Props) => {
-    const { auth } = usePage().props as { auth: { user?: User } };
+    const { auth } = usePage().props as { auth: { user: User } };
+    const currentUser = auth.user;
 
     useEchoPublic('posts', 'BroadcastEvent', () => {
         router.reload({ only: ['posts'], reset: ['posts'] });
@@ -94,7 +96,7 @@ const AllPost = ({ posts, user }: Props) => {
     };
 
     const displayName = auth.user?.name ?? 'Guest';
-
+    const displayFirstName = displayName.split(' ')[0];
     return (
         <div className="min-h-screen bg-[#f0f2f5]">
             <FBnavbar user={auth.user ?? user} />
@@ -106,134 +108,155 @@ const AllPost = ({ posts, user }: Props) => {
 
                 <div className="mx-auto w-full max-w-2xl flex-1">
                     <div className="mb-4 rounded-xl border bg-white p-4 shadow-sm">
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <button
-                                    type="button"
-                                    className="w-full rounded-full border border-[#ccd0d5] bg-[#f0f2f5] px-4 py-2.5 text-left text-sm text-[#65676b] transition hover:bg-[#e4e6eb]"
-                                >
-                                    {`What's on your mind, ${displayName}?`}
-                                </button>
-                            </DialogTrigger>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#0084ff]">
+                                {currentUser.profile_photo ? (
+                                    <img
+                                        src={`/storage/${currentUser.profile_photo}`}
+                                        alt={displayName}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="text-sm font-semibold text-white">
+                                        {displayName.charAt(0).toUpperCase()}
+                                    </span>
+                                )}
+                            </div>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="flex-1 rounded-full border border-[#ccd0d5] bg-[#f0f2f5] px-4 py-2.5 text-left text-sm text-[#65676b] transition hover:bg-[#e4e6eb]"
+                                    >
+                                        {`What's on your mind, ${displayFirstName}?`}
+                                    </button>
+                                </DialogTrigger>
 
-                            <DialogContent className="sm:max-w-lg">
-                                <form
-                                    onSubmit={handleSubmit}
-                                    className="space-y-5"
-                                >
-                                    <DialogHeader className="border-b pb-3">
-                                        <DialogTitle className="text-center text-xl font-semibold text-[#050505]">
-                                            Create post
-                                        </DialogTitle>
-                                    </DialogHeader>
+                                <DialogContent className="sm:max-w-lg">
+                                    <form
+                                        onSubmit={handleSubmit}
+                                        className="space-y-5"
+                                    >
+                                        <DialogHeader className="border-b pb-3">
+                                            <DialogTitle className="text-center text-xl font-semibold text-[#050505]">
+                                                Create post
+                                            </DialogTitle>
+                                        </DialogHeader>
 
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e4e6eb] text-sm font-semibold text-[#1c1e21]">
-                                                {displayName
-                                                    .charAt(0)
-                                                    .toUpperCase()}
-                                            </div>
-                                            <p className="text-sm font-semibold text-[#050505]">
-                                                {displayName}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <Label className="text-[#65676b]">
-                                                Title
-                                            </Label>
-                                            <Input
-                                                className="mt-1 border-[#ccd0d5] focus-visible:ring-[#1877f2]"
-                                                value={data.title}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'title',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label className="text-[#65676b]">
-                                                Post
-                                            </Label>
-                                            <Textarea
-                                                className="mt-1 min-h-36 resize-none border-[#ccd0d5] text-base focus-visible:ring-[#1877f2]"
-                                                value={data.post}
-                                                placeholder={`What's on your mind, ${displayName}?`}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'post',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label className="text-[#65676b]">
-                                                Photo
-                                            </Label>
-                                            <Input
-                                                type="file"
-                                                accept="image/*"
-                                                multiple
-                                                className="mt-1 border-[#ccd0d5] focus-visible:ring-[#1877f2]"
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'images',
-                                                        Array.from(
-                                                            e.target.files ??
-                                                                [],
-                                                        ),
-                                                    )
-                                                }
-                                            />
-                                            {data.images.length > 0 && (
-                                                <div className="mt-2 grid grid-cols-3 gap-2">
-                                                    {data.images.map(
-                                                        (image, idx) => (
-                                                            <img
-                                                                key={`${image.name}-${idx}`}
-                                                                src={URL.createObjectURL(
-                                                                    image,
-                                                                )}
-                                                                alt={image.name}
-                                                                className="h-20 w-full rounded-md border object-cover"
-                                                            />
-                                                        ),
-                                                    )}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e4e6eb] text-sm font-semibold text-[#1c1e21]">
+                                                    {displayName
+                                                        .charAt(0)
+                                                        .toUpperCase()}
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                                <p className="text-sm font-semibold text-[#050505]">
+                                                    {displayName}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <Label className="text-[#65676b]">
+                                                    Title
+                                                </Label>
+                                                <Input
+                                                    className="mt-1 border-[#ccd0d5] focus-visible:ring-[#1877f2]"
+                                                    value={data.title}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'title',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
 
-                                    <DialogFooter className="border-t pt-4">
-                                        <DialogClose asChild>
+                                            <div>
+                                                <Label className="text-[#65676b]">
+                                                    Post
+                                                </Label>
+                                                <Textarea
+                                                    className="mt-1 min-h-36 resize-none border-[#ccd0d5] text-base focus-visible:ring-[#1877f2]"
+                                                    value={data.post}
+                                                    placeholder={`What's on your mind, ${displayName}?`}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'post',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <Label className="text-[#65676b]">
+                                                    Photo
+                                                </Label>
+                                                <Input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    multiple
+                                                    className="mt-1 border-[#ccd0d5] focus-visible:ring-[#1877f2]"
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'images',
+                                                            Array.from(
+                                                                e.target
+                                                                    .files ??
+                                                                    [],
+                                                            ),
+                                                        )
+                                                    }
+                                                />
+                                                {data.images.length > 0 && (
+                                                    <div className="mt-2 grid grid-cols-3 gap-2">
+                                                        {data.images.map(
+                                                            (image, idx) => (
+                                                                <img
+                                                                    key={`${image.name}-${idx}`}
+                                                                    src={URL.createObjectURL(
+                                                                        image,
+                                                                    )}
+                                                                    alt={
+                                                                        image.name
+                                                                    }
+                                                                    className="h-20 w-full rounded-md border object-cover"
+                                                                />
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <DialogFooter className="border-t pt-4">
+                                            <DialogClose asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    type="button"
+                                                    className="rounded-md border-[#ccd0d5]"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </DialogClose>
                                             <Button
-                                                variant="outline"
-                                                type="button"
-                                                className="rounded-md border-[#ccd0d5]"
+                                                type="submit"
+                                                className="bg-[#1877f2] hover:bg-[#166fe5]"
+                                                disabled={
+                                                    processing ||
+                                                    (data.post.trim() === '' &&
+                                                        data.images.length ===
+                                                            0)
+                                                }
                                             >
-                                                Cancel
+                                                {processing
+                                                    ? 'Posting...'
+                                                    : 'Post'}
                                             </Button>
-                                        </DialogClose>
-                                        <Button
-                                            type="submit"
-                                            className="bg-[#1877f2] hover:bg-[#166fe5]"
-                                            disabled={
-                                                processing ||
-                                                (data.post.trim() === '' &&
-                                                    data.images.length === 0)
-                                            }
-                                        >
-                                            {processing ? 'Posting...' : 'Post'}
-                                        </Button>
-                                    </DialogFooter>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </div>
 
                     {!posts || posts.data.length === 0 ? (
