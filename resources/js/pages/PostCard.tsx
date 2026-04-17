@@ -25,9 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import type {
-    ThreadComment,
-} from './components/CommentThreadItem';
+import type { ThreadComment } from './components/CommentThreadItem';
 import CommentThreadItem from './components/CommentThreadItem';
 import EditPostDialog from './components/EditPostDialog';
 import Reaction from './components/Reaction';
@@ -42,7 +40,7 @@ export type Post = {
     user_reaction: string;
     reaction_counts: Record<string, number>;
     total_counts: number;
-    user: { id: number; name: string };
+    user: { id: number; name: string; profile_photo?: string | null };
     comments?: ThreadComment[];
 };
 
@@ -55,6 +53,7 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
     const { auth } = usePage().props as any;
     const authorName = post.user?.name ?? 'Unknown';
     const authorInitial = authorName.charAt(0).toUpperCase();
+    const authorProfilePhoto = post.user?.profile_photo;
     const commentInputRef = useRef<HTMLTextAreaElement | null>(null);
     const [selectedImageIndex, setSelectedImageIndex] = React.useState<
         number | null
@@ -133,8 +132,18 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
             <Card className="relative w-full rounded-xl border border-[#dddfe2] bg-white shadow-sm">
                 <CardHeader className="items-start pb-3">
                     <div className="flex w-full items-start gap-3 pr-20">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e4e6eb] text-sm font-semibold text-[#1c1e21]">
-                            {authorInitial}
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#0084ff]">
+                            {authorProfilePhoto ? (
+                                <img
+                                    src={`/storage/${authorProfilePhoto}`}
+                                    alt={authorName}
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <span className="text-sm font-semibold text-white">
+                                    {authorInitial}
+                                </span>
+                            )}
                         </div>
                         <div className="min-w-0">
                             <CardDescription className="text-sm font-semibold text-[#050505]">

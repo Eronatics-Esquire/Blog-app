@@ -51,9 +51,7 @@ class ProfileController extends Controller
             Storage::disk('public')->delete($oldPhoto);
         }
 
-        return response()->json([
-            'profile_photo_url' => Storage::url($path),
-        ]);
+        return to_route('profile');
     }
 
     public function updateCoverPhoto(Request $request)

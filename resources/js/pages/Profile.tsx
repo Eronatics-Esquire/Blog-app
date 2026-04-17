@@ -1,4 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import {
     Camera,
     Check,
@@ -63,6 +64,8 @@ export default function Profile({ user, isOwnProfile = true }: Props) {
         }
     }, [user.cover_photo_url, uploadingCover]);
 
+    const uploadForm = useForm<{ profile_photo: File }>();
+
     const handleProfilePhotoChange = (
         e: React.ChangeEvent<HTMLInputElement>,
     ) => {
@@ -70,39 +73,23 @@ export default function Profile({ user, isOwnProfile = true }: Props) {
         if (!file) return;
 
         setUploadingProfile(true);
-
-        const formData = new FormData();
-        formData.append('profile_photo', file);
-
-        const csrfToken =
-            document
-                .querySelector('meta[name="csrf-token"]')
-                ?.getAttribute('content') || '';
-
-        fetch('/profile/update-profile-photo', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-            },
-            body: formData,
-            credentials: 'include',
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.profile_photo_url) {
-                    window.location.reload();
-                } else if (data.errors) {
-                    alert('Upload failed: ' + JSON.stringify(data.errors));
-                    setUploadingProfile(false);
-                } else {
-                    setUploadingProfile(false);
-                }
-            })
-            .catch((err) => {
-                console.error('Upload error:', err);
-                setUploadingProfile(false);
-            });
+        uploadForm.setData('profile_photo', file);
     };
+
+    useEffect(() => {
+        if (uploadForm.data.profile_photo && uploadingProfile) {
+            uploadForm.post('/profile/update-profile-photo', {
+                onSuccess: () => {
+                    uploadForm.reset('profile_photo');
+                    window.location.reload();
+                },
+                onError: (errors: any) => {
+                    alert('Upload failed: ' + JSON.stringify(errors));
+                    setUploadingProfile(false);
+                },
+            });
+        }
+    }, [uploadForm.data.profile_photo]);
 
     const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -128,18 +115,22 @@ export default function Profile({ user, isOwnProfile = true }: Props) {
             credentials: 'include',
         })
             .then((res) => {
+                if (res.status === 419) {
+                    window.location.reload();
+                    return;
+                }
                 if (!res.ok) {
                     throw new Error(`HTTP ${res.status}`);
                 }
                 return res.json();
             })
             .then((data) => {
-                if (data.cover_photo_url) {
+                if (data?.cover_photo_url) {
                     window.location.reload();
-                } else if (data.errors) {
+                } else if (data?.errors) {
                     alert('Upload failed: ' + JSON.stringify(data.errors));
                     setUploadingCover(false);
-                } else {
+                } else if (data) {
                     setUploadingCover(false);
                 }
             })
