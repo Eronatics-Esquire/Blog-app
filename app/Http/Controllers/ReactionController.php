@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Events\BroadcastEvent;
 use App\Models\Post;
+<<<<<<< Updated upstream
 use App\Models\Reaction;
+=======
+use App\Services\ReactionService;
+>>>>>>> Stashed changes
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 
 class ReactionController extends Controller
 {
+<<<<<<< Updated upstream
     public function react(Request $request, Post $post)
     {
         if (!Auth()->check()){
@@ -43,9 +46,27 @@ class ReactionController extends Controller
         }
     }
         $post->load('reactions');
+=======
+    public function __construct(protected ReactionService $reactionService) {}
+
+    public function react(Request $request, Post $post)
+    {
+        $post = $this->reactionService->react($request, $post);
+>>>>>>> Stashed changes
         broadcast(new BroadcastEvent(post: $post));
 
-            return redirect()->back();
+        return redirect()->back();
     }
-}
+<<<<<<< Updated upstream
+=======
 
+    public function reactComment(Request $request, Comment $comment)
+    {
+        $post = $this->reactionService->reactComment($request, $comment);
+        $post?->load(['comments.user', 'comments.reactions']);
+        broadcast(new BroadcastEvent(post: $post));
+
+        return redirect()->back();
+    }
+>>>>>>> Stashed changes
+}
