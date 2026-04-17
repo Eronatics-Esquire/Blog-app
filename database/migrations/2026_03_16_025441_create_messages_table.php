@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Conversation::class)->constrained()->cascadeOnDelete();
-            $table->text('message');
+            $table->longText('message');
             $table->timestamps();
         });
     }
