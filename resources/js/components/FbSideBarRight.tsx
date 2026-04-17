@@ -1,20 +1,30 @@
 import React, { useEffect, useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 import { useEchoPublic } from '@laravel/echo-react';
-import type { Contact } from '@/types/auth';
+import type { Contact, User } from '@/types/auth';
 
 const FbSideBarRight = () => {
+    const { auth } = usePage().props as { auth?: { user?: User } };
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
+        if (!auth?.user?.id) return;
+
         const fetchContacts = async () => {
             try {
                 const response = await fetch('/api/contacts/presence', {
                     headers: { Accept: 'application/json' },
                     credentials: 'include',
                 });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
                 const data = await response.json();
                 setContacts(data.contacts || []);
             } catch (error) {

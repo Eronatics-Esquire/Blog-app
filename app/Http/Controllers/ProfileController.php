@@ -13,12 +13,19 @@ class ProfileController extends Controller
     {
         $user = User::where('id', $request->user()->id)
             ->with(['posts' => function ($query) {
-                $query->with(['user', 'reactions', 'comments.user'])->latest();
+                $query->with(['user', 'reactions', 'comments.user', 'images'])->latest();
             }])
             ->first();
 
         $user->friends_count = 0;
         $user->photos_count = $user->posts()->whereNotNull('image_path')->count();
+
+        $user->posts->transform(function ($post) {
+            $post->image_url = $post->image_path ? Storage::url($post->image_path) : null;
+            $post->image_urls = $post->images->map(fn ($image) => Storage::url($image->path))->values();
+
+            return $post;
+        });
 
         return inertia('Profile', [
             'user' => array_merge($user->toArray(), [
@@ -75,11 +82,18 @@ class ProfileController extends Controller
     {
         $user = User::where('id', $user->id)
             ->with(['posts' => function ($query) {
-                $query->with(['user', 'reactions', 'comments.user'])->latest();
+                $query->with(['user', 'reactions', 'comments.user', 'images'])->latest();
             }])
             ->first();
 
         $isOwnProfile = Auth::id() === $user->id;
+
+        $user->posts->transform(function ($post) {
+            $post->image_url = $post->image_path ? Storage::url($post->image_path) : null;
+            $post->image_urls = $post->images->map(fn ($image) => Storage::url($image->path))->values();
+
+            return $post;
+        });
 
         return inertia('Profile', [
             'user' => array_merge($user->toArray(), [

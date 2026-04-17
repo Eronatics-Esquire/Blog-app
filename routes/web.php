@@ -5,12 +5,21 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReactionController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/login')->name('home');
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect('/all-post');
+    }
+
+    return redirect('/login');
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', function () {
+        return redirect('/all-post');
+    })->name('dashboard');
     Route::get('/all-post', [PostController::class, 'showAll'])->name('all-post');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::get('/profile/{user}', [ProfileController::class, 'viewProfile'])->name('profile.view');
